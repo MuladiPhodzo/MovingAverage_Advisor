@@ -1,0 +1,8 @@
+Name                        Stmts   Miss  Cover
+-----------------------------------------------
+advisor.py                    132    132     0%
+database\mysqldatabase.py      53     53     0%
+movingaverage.py              116    116     0%
+tradesalgo.py                  39     39     0%
+-----------------------------------------------
+TOTAL                         340    340     0%
