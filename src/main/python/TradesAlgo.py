@@ -1,6 +1,7 @@
 import MetaTrader5 as mt5
 import pandas as pd
 import time
+import numpy as np
 
 class MT5TradingAlgorithm:
     def __init__(self, data, symbol, lot_size=0.1, magic_number=1000, market_Bias=int):
@@ -58,30 +59,19 @@ class MT5TradingAlgorithm:
         self.current_position = action
         return True
 
-    def execute_trades(self, data):
-        """
-        Execute trades based on signals in the data.
-        :param data: Pandas DataFrame with a 'Signal' column.
-        """
-        for index, row in data.iterrows():
-            signal = row['Signal']
-            if signal == 1 and self.current_position != 'buy':
-                self.place_order('buy')
-            elif signal == -1 and self.current_position != 'sell':
-                self.place_order('sell')
-            time.sleep(1)  # Avoid API rate limits or overloading
-
-    def run_Trades(self, latest, current_price, THRESHOLD, symbol ):
+    def run_Trades(self, market_bias, ltf_latest, current_price, THRESHOLD, symbol ):
       
-      if abs(current_price - latest['Fast_MA']) <= THRESHOLD or abs(current_price - latest['Slow_MA']) <= THRESHOLD:
-        if latest['Bias'] == "Bullish":
-          print("Bullish Signal - Placing BUY order")
-          self.place_order(symbol, 'buy')
-        elif latest['Bias'] == "Bearish":
-          print("Bearish Signal - Placing SELL order")
-          self.place_order(symbol, 'sell')
+      if abs(current_price - ltf_latest['Fast_MA']) <= THRESHOLD or abs(current_price - ltf_latest['Slow_MA']) <= THRESHOLD:
+        if market_bias == "Bullish" and ltf_latest["Fast_MA"] > ltf_latest["Slow_MA"]:
+            print(f"{symbol} - Confirmed Bullish Signal - Placing BUY order")
+            self.place_order(symbol, "buy")
+            self.data['Trades'] = 'Buy'
+        elif market_bias == "Bearish" and ltf_latest["Fast_MA"] < ltf_latest["Slow_MA"]:
+            print(f"{symbol} - Confirmed Bearish Signal - Placing SELL order")
+            self.place_order(symbol, "sell")
+            self.data['Trades'] = 'Sell'
       else:
-          print("No trade - Price too far from moving averages")
+          print(f"{symbol} - No valid entry signal")
             
     def close(self):
         """Shutdown MT5 connection."""

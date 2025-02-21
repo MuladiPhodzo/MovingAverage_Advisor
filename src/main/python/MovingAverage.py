@@ -1,8 +1,10 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import MetaTrader5 as mt5
+import TradesAlgo as algo
 import os
 import numpy as np
+import time
 
 class MovingAverageCrossover:
 
@@ -49,6 +51,32 @@ class MovingAverageCrossover:
 		print("Moving averages calculated.")
 		return self.data
 
+	def multi_Timeframe_Synthesis(self, symbol, client, timeframes: dict, threshold):
+   
+		while(True):
+    
+			self.data = client.get_multi_tf_data(symbol, timeframes)
+   
+			trade = algo.MT5TradingAlgorithm(self.data, symbol)
+			if "HTF" not in self.data or "LTF" not in self.data:
+				return None
+
+			htf_strategy = MovingAverageCrossover(symbol, data=self.data["HTF"])
+			ltf_strategy = MovingAverageCrossover(symbol, data=self.data["LTF"])
+
+			HTF_data = htf_strategy.calculate_moving_averages()
+			LTF_data = ltf_strategy.calculate_moving_averages()
+		
+			htf_latest = HTF_data.iloc[-1]
+			ltf_latest = LTF_data.iloc[-1]
+			current_price = ltf_latest['close']
+			
+			market_Bias = "Bullish" if htf_latest['Fast_MA'] > htf_latest['Slow_MA'] else "Bearish"
+		
+			trade.run_Trades(market_Bias, ltf_latest, current_price, threshold, symbol)
+			time.sleep(60)
+		
+
 	def generate_signals(self):
 		"""Generate buy and sell signals based on moving average crossover."""
   
@@ -71,7 +99,7 @@ class MovingAverageCrossover:
 	def toCSVFile(self, rates):
 			# Convert rates to DataFrame
 			self.data = pd.DataFrame(rates)
-			file_path = f'src\main\python\Logs\Rates\{self.symbol}_rates.csv'
+			file_path = f'src/main/python/Logs/Rates/{self.symbol}_rates.csv'
 			# Ensure the directory exists before writing
 			os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
@@ -95,7 +123,7 @@ class MovingAverageCrossover:
 		self.signals = entry_levels.reset_index(drop=True)
 		print("Entry levels identified.")
 
-	def save_signals_to_csv(self, file_name="Logs/Signal_log.csv"):
+	def save_signals_to_csv(self, file_name="src/main/python/Logs"):
 		"""
 		Save identified entry levels to a CSV file.
 		- Creates the file if it doesn't exist.
@@ -199,7 +227,6 @@ class MovingAverageCrossover:
 		strategy.calculate_moving_averages()
 		strategy.generate_signals()
 		strategy.identify_entry_levels()
-		strategy.save_signals_to_csv()
 		results = strategy.backtest_strategy()
 
 		# Plot the results
