@@ -69,7 +69,6 @@ class MT5TradingAlgorithm:
         elif market_bias == "Bearish" and ltf_latest["Fast_MA"] < ltf_latest["Slow_MA"]:
             print(f"{symbol} - Confirmed Bearish Signal - Placing SELL order")
             self.place_order(symbol, "sell")
-            self.data['Trades'] = 'Sell'
       else:
           print(f"{symbol} - No valid entry signal")
             

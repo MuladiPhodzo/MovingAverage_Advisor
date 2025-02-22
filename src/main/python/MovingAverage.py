@@ -1,10 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import MetaTrader5 as mt5
-import TradesAlgo as algo
 import os
 import numpy as np
-import time
 
 class MovingAverageCrossover:
 
@@ -49,33 +47,7 @@ class MovingAverageCrossover:
 		self.data = self.data.dropna()
   
 		print("Moving averages calculated.")
-		return self.data
-
-	def multi_Timeframe_Synthesis(self, symbol, client, timeframes: dict, threshold):
-   
-		while(True):
-    
-			self.data = client.get_multi_tf_data(symbol, timeframes)
-   
-			trade = algo.MT5TradingAlgorithm(self.data, symbol)
-			if "HTF" not in self.data or "LTF" not in self.data:
-				return None
-
-			htf_strategy = MovingAverageCrossover(symbol, data=self.data["HTF"])
-			ltf_strategy = MovingAverageCrossover(symbol, data=self.data["LTF"])
-
-			HTF_data = htf_strategy.calculate_moving_averages()
-			LTF_data = ltf_strategy.calculate_moving_averages()
-		
-			htf_latest = HTF_data.iloc[-1]
-			ltf_latest = LTF_data.iloc[-1]
-			current_price = ltf_latest['close']
-			
-			market_Bias = "Bullish" if htf_latest['Fast_MA'] > htf_latest['Slow_MA'] else "Bearish"
-		
-			trade.run_Trades(market_Bias, ltf_latest, current_price, threshold, symbol)
-			time.sleep(60)
-		
+		return self.data	
 
 	def generate_signals(self):
 		"""Generate buy and sell signals based on moving average crossover."""
@@ -198,9 +170,7 @@ class MovingAverageCrossover:
 		plt.title('Moving Average Crossover Signals')
 		plt.legend(loc='upper left')
 		plt.show()
-
-
-			
+	
 	def run_moving_average_strategy(self, symbol, timeframe, start_time, count):
 		"""
 		Fetch rates data and apply the Moving Average Crossover strategy.
@@ -233,18 +203,3 @@ class MovingAverageCrossover:
 		#strategy.plot_charts()
 		strategy.plot_performance()
 		return (self.data ,results)
-
-
-"""# Example Usage
-if __name__ == "__main__":
-	# Assuming MetaTrader5 is initialized and connected
-	from datetime import datetime
-
-	strategy = MovingAverageCrossover(pd.DataFrame(), fast_period=50, slow_period=200)
-	strategy.run_moving_average_strategy(
-			symbol="EURUSD",
-			timeframe=mt5.TIMEFRAME_M15,
-			start_time=datetime(2024, 1, 1),
-			count=1000
-	)
-"""
