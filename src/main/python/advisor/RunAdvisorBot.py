@@ -17,11 +17,7 @@ class RunAdvisorBot:
 		self.symbols = symbols
 		self.advisor = Advisor.MetaTrader5Client(symbols).initialize()
 
-	def movingAverage_StartUp(self, symbol, data):
-		MA_Handler = MA.MovingAverageCrossover(symbol, data)
-		return MA_Handler
-
-	def assemble_Algo(self, symbol, client: Advisor.MetaTrader5Client, timeframes: dict):
+	def main(self, symbol, client: Advisor.MetaTrader5Client, timeframes: dict):
 
 		while(True):
 
@@ -47,9 +43,6 @@ class RunAdvisorBot:
 			trade.run_Trades(market_Bias, ltf_latest, current_price, client.THRESHOLD, symbol)
 			time.sleep(60)
 
-
-		
-
 if __name__ == "__main__":
 	
 	symbols = []
@@ -58,6 +51,7 @@ if __name__ == "__main__":
 	bot.advisor.TF = {
 		"HTF": mt5.TIMEFRAME_H4,
 		"LTF" :mt5.TIMEFRAME_H1}
+ 
 	if not bot.advisor.initialize():
 		exit()
 	"""
@@ -70,6 +64,6 @@ if __name__ == "__main__":
 		exit()
 	
 	with ft.ThreadPoolExecutor(max_workers=len(symbols)) as executor:
-		executor.map(lambda symbol: bot.assemble_Algo(symbol, bot.advisor, bot.advisor.TF))
+		executor.map(lambda symbol: bot.main(symbol, bot.advisor, bot.advisor.TF))
 	bot.advisor.shutdown()
 	

@@ -42,14 +42,9 @@ if __name__ == '__main__':
         project_urls = {},
 
         scripts = [],
-        packages = [],
+        packages = ['advisor'],
         namespace_packages = [],
-        py_modules = [
-            'Advisor',
-            'MovingAverage',
-            'TradesAlgo',
-            'database.MySQLdatabase'
-        ],
+        py_modules = ['database.MySQLdatabase'],
         entry_points = {},
         data_files = [],
         package_data = {},

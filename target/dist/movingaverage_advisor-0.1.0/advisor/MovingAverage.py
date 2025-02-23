@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import MetaTrader5 as mt5
-import Advisor as adv
 import os
 import numpy as np
 
@@ -23,8 +22,8 @@ class MovingAverageCrossover:
 		self.symbol = symbol
 
 	def get_rates_from(self, symbol, timeframe, start_time, count):
-		
 		"""Fetch historical rates from MetaTrader 5."""
+  
 		rates = mt5.copy_rates_from(symbol, timeframe, start_time, count)
 		if rates is None:
 				print(f"Failed to retrieve {symbol} rates, error code:", mt5.last_error())
@@ -32,24 +31,27 @@ class MovingAverageCrossover:
 
 	def calculate_moving_averages(self):
 		"""Calculate the fast and slow moving averages."""
+  
 		if 'close' not in self.data.columns:
 				raise ValueError("'close' column is missing in the data.")
+  
 		self.data['Fast_MA'] = self.data['close'].rolling(window=self.fast_period).mean()
 		self.data['Slow_MA'] = self.data['close'].rolling(window=self.slow_period).mean()
-  
 		self.data['Signal'] = np.where(self.data['Fast_MA'] > self.data['Slow_MA'], 1, 
-                          np.where(self.data['Fast_MA'] < self.data['Slow_MA'], -1, 0))
+						  np.where(self.data['Fast_MA'] < self.data['Slow_MA'], -1, 0))
   
 		self.data['Crossover'] = self.data['Signal'].diff()
-		
 		self.data['Bias'] = np.where(self.data['Fast_MA'] > self.data['Slow_MA'], "Bullish", "Bearish")
+  
 		self.data = self.data.drop(columns=['tick_volume', 'spread', 'real_volume'])
 		self.data = self.data.dropna()
+  
 		print("Moving averages calculated.")
-		return self.data
+		return self.data	
 
 	def generate_signals(self):
 		"""Generate buy and sell signals based on moving average crossover."""
+  
 		if 'Fast_MA' not in self.data.columns or 'Slow_MA' not in self.data.columns:
 				raise ValueError("Moving averages are missing. Please run 'calculate_moving_averages()' first.")
 		
@@ -59,22 +61,17 @@ class MovingAverageCrossover:
 		]
 
 		choices = [1, -1]  # Buy = 1, Sell = -1
-
 		self.data['Signal'] = np.select(conditions, choices, default=0)
-
-	
 		self.data['Crossover'] = self.data['Signal'].diff() 
 
-		# Remove rows with missing or empty values
 		self.data = self.data.dropna()
-		#print(self.data[['Signal', 'Crossover']].tail())
-		print( self.data)
+		print(self.data[['Signal', 'Crossover']].tail())
 		print("Signals and crossovers generated.")
 	
 	def toCSVFile(self, rates):
 			# Convert rates to DataFrame
 			self.data = pd.DataFrame(rates)
-			file_path = f'src\main\python\Logs\Rates\{self.symbol}_rates.csv'
+			file_path = f'src/main/python/Logs/Rates/{self.symbol}_rates.csv'
 			# Ensure the directory exists before writing
 			os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
@@ -98,12 +95,13 @@ class MovingAverageCrossover:
 		self.signals = entry_levels.reset_index(drop=True)
 		print("Entry levels identified.")
 
-	def save_signals_to_csv(self, file_name="Logs/Signal_log.csv"):
+	def save_signals_to_csv(self, file_name="src/main/python/Logs"):
 		"""
 		Save identified entry levels to a CSV file.
 		- Creates the file if it doesn't exist.
 		- Appends to the file if it already exists.
 		"""
+  
 		if self.signals is not None:
 			file_exists = os.path.isfile(file_name)
 			if not file_exists:
@@ -172,9 +170,7 @@ class MovingAverageCrossover:
 		plt.title('Moving Average Crossover Signals')
 		plt.legend(loc='upper left')
 		plt.show()
-
-
-			
+	
 	def run_moving_average_strategy(self, symbol, timeframe, start_time, count):
 		"""
 		Fetch rates data and apply the Moving Average Crossover strategy.
@@ -201,25 +197,9 @@ class MovingAverageCrossover:
 		strategy.calculate_moving_averages()
 		strategy.generate_signals()
 		strategy.identify_entry_levels()
-		strategy.save_signals_to_csv()
 		results = strategy.backtest_strategy()
 
 		# Plot the results
 		#strategy.plot_charts()
 		strategy.plot_performance()
 		return (self.data ,results)
-
-
-"""# Example Usage
-if __name__ == "__main__":
-	# Assuming MetaTrader5 is initialized and connected
-	from datetime import datetime
-
-	strategy = MovingAverageCrossover(pd.DataFrame(), fast_period=50, slow_period=200)
-	strategy.run_moving_average_strategy(
-			symbol="EURUSD",
-			timeframe=mt5.TIMEFRAME_M15,
-			start_time=datetime(2024, 1, 1),
-			count=1000
-	)
-"""

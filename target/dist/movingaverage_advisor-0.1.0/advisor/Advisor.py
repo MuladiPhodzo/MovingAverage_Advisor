@@ -4,28 +4,30 @@ import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 import MetaTrader5 as mt5
 import MovingAverage as MA
-import TradesAlgo as Algo
 import os
+import concurrent.futures as ft
 
 
 register_matplotlib_converters()
 
 
 class MetaTrader5Client:
-	def __init__(self, symbols):
+	def __init__(self, symbols, threshold = 0.0005):
 		self.symbols = symbols
-		self.Ratesdata = None
+		self.THRESHOLD = threshold
+		self.data = None
 		self.account_info = None
 		self.terminal_info = None
 		self.TF = None
 
 	def initialize(self):
-		if not mt5.initialize():
-			print("initialize() failed, error code =", mt5.last_error())
-			mt5.shutdown()
-			return False
-		'''self.account_info = mt5.account_info()
-		self.terminal_info = mt5.terminal_info()'''
+		try:
+			if not mt5.initialize():
+				print("initialize() failed, error code =", mt5.last_error())
+				mt5.shutdown()
+				return False
+		finally:
+			self.check_symbols_availability()
 		return True
 
 	def check_symbols_availability(self):
@@ -67,6 +69,7 @@ class MetaTrader5Client:
 		if rates is None:
 				print(f"Failed to get data for {symbol}")
 				return None
+	
 		return pd.DataFrame(rates)
 
 	def get_rates_range(self, symbol, timeframe, start_time, end_time):
@@ -76,21 +79,43 @@ class MetaTrader5Client:
  
 		return pd.DataFrame(rates)
 
+	def get_multi_tf_data(self, symbol, timeframes: dict):
+		"""Fetch data for multiple timeframes and return as dataframe dictionary."""
+		multi_tf_data = {}
+		for tf in timeframes.values():
+				print(f"Fetching {symbol} data for {tf} timeframe...")
+				data = self.get_live_data(symbol, tf, 1000)
+				if data is not None:
+						multi_tf_data[tf] = pd.DataFrame(data)
+				else:
+						print(f"Failed to fetch data for {symbol} on {tf}.")
+		self.data = multi_tf_data
+		return multi_tf_data
+
 	def toCSVFile(self, rates, file_path):
-		# Convert rates to DataFrame
-		self.Ratesdata = pd.DataFrame(rates)
-
-		# Ensure the directory exists before writing
-		os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-		# Write DataFrame to CSV, creating the file if it doesn’t exist
-		self.Ratesdata.to_csv(file_path, index=True, mode='w', header=True)
-
+		"""
+		Save ratesData to a CSV file.
+		- Creates the file if it doesn't exist.
+		- Appends to the file if it already exists.
+		"""
+	
+		if self.Ratesdata is not None:
+			file_exists = os.path.isfile(file_path)
+	 
+			if not file_exists:
+				self.Ratesdata.to_csv(file_path, index=False, mode='w', header=True)
+				print(f"New file created and entry levels saved to {file_path}.")
+			else:
+				self.Ratesdata.to_csv(file_path, index=False, mode='a', header=False)
+				print(f"Entry levels appended to existing file {file_path}.")
+		else:
+				print("No rates to save.")
+		
 	def shutdown(self):
 		mt5.shutdown()
 
-
 class DataPlotter:
+  
 	@staticmethod
 	def plot_ticks(ticks, title):
 		if ticks is None or len(ticks) == 0:
@@ -115,7 +140,7 @@ class DataPlotter:
 		plt.title(title)
 		plt.legend()
 		plt.show()
-  
+	
 	@staticmethod
 	def plot_charts(rates, fast_period, slow_period):
 		if rates is None:
@@ -151,60 +176,75 @@ class DataPlotter:
 		plt.legend(loc='upper left')
 		plt.show()
 
-if __name__ == "__main__":
-	# Initialize client and symbols
-	symbols = ["USDJPY", "USDCHF", "USDCAD", "USDZAR", "EURUSD"]
-	plotter = DataPlotter()
-	client = MetaTrader5Client(symbols)
-	client.TF = mt5.TIMEFRAME_H1
-	THRESHOLD = 0.0005
+# if __name__ == "__main__":
+# 	# Initialize client and symbols
+# 	symbols = ["USDJPY", "USDCHF", "USDCAD", "USDZAR", "EURUSD"]
+# 	Now = datetime.now()
+ 
+# 	plotter = DataPlotter()
+# 	client = MetaTrader5Client(symbols)
+# 	client.TF = {
+#    "HTF": mt5.TIMEFRAME_H4,
+#    "LTF" :mt5.TIMEFRAME_H1}
+	
+# 	THRESHOLD = 0.0005
 
-	if not client.initialize():
-		exit()
-	"""
-	print("ACCOUNT.info: ", client.account_info)
-	print("terminal.info: ", client.terminal_info)
-	 """
+# 	if not client.initialize():
+# 		exit()
+# 	"""
+# 	print("ACCOUNT.info: ", client.account_info)
+# 	print("terminal.info: ", client.terminal_info)
+# 	 """
 
-	if not client.check_symbols_availability():
-		client.shutdown()
-		exit()
+# 	if not client.check_symbols_availability():
+# 		client.shutdown()
+# 		exit()
 
-	print("Assembling dataframes......")
-	for symbol in symbols:
-		print(f"Fetching {symbol} rates...")
-		rangedRates = client.get_rates_range(symbol, client.TF, datetime(2024, 8, 1, 00), datetime.now())
-		client.Ratesdata = pd.DataFrame(rangedRates)
-		strategy = MA.MovingAverageCrossover(symbol, data=client.Ratesdata, fast_period=50, slow_period=100)
-		data = strategy.run_moving_average_strategy(symbol, mt5.TIMEFRAME_M15, datetime(2024, 11, 28, 13), 1000)
-		print("data: ", data[1])
-		bias = data[1]['Bias']
-		for symbol in symbols:
-			data = client.get_live_data(symbol, client.TF, 1000)
-			rates_data = pd.DataFrame(data)
-			trade = Algo.MT5TradingAlgorithm(rates_data, symbol,)
-			if rates_data is None:
-				client.shutdown()
+# 		# for symbol in symbols:
+	
+# 		# 	print(f"Fetching {symbol} rates...")
+# 		# 	filepath = f'src/main/python/Logs/Rates/{symbol}_rates'
+# 		# 	rangedRates = client.get_rates_range(symbol, client.TF, datetime(2024, 8, 1, 00), Now)
+# 		# 	client.Ratesdata = pd.DataFrame(rangedRates)
+# 		# 	strategy = MA.MovingAverageCrossover(symbol, data=client.Ratesdata, fast_period=50, slow_period=100)
+# 		# 	data = strategy.run_moving_average_strategy(symbol, client.TF, datetime(2024, 11, 28, 13), 1000)
 			
-			MovingAverage = MA.MovingAverageCrossover(symbol, data=rates_data, fast_period=50, slow_period=100)
-			data = MovingAverage.calculate_moving_averages()
-			latest = data.iloc[-1]
-			current_price = latest['close']
+		
+# 		# 	data = client.get_multi_tf_data(symbol, client.TF)
+# 		# 	if data is None:
+# 		# 		client.shutdown()
+    
+# 		# 	htf_data = data["HTF"]
+# 		# 	ltf_data = data["LTF"]
+# 		# 	trade = Algo.MT5TradingAlgorithm(rates_data, symbol,)
+	
 			
-			client.Ratesdata = data
-			print(client.Ratesdata)
-			plotter.plot_charts(
-					client.Ratesdata, 
-					client.Ratesdata['close'].rolling(window=50).mean(),
-					client.Ratesdata['close'].rolling(window=100).mean())
-			# Check if the price is within the threshold of moving averages
-			if abs(current_price - latest['Fast_MA']) <= THRESHOLD or abs(current_price - latest['Slow_MA']) <= THRESHOLD:
-					if latest['Bias'] == "Bullish":
-							print("Bullish Signal - Placing BUY order")
-							trade.place_order(symbol, 'buy')
-					elif latest['Bias'] == "Bearish":
-							print("Bearish Signal - Placing SELL order")
-							trade.place_order(symbol, 'sell')
-			else:
-					print("No trade - Price too far from moving averages")
-	client.shutdown()
+			
+# 		# 	HTF_MovingAverage = MA.MovingAverageCrossover(symbol, htf_data)
+# 		# 	LTF_MovingAverage = MA.MovingAverageCrossover(symbol, ltf_data)
+# 		# 	HTF_data = HTF_MovingAverage.calculate_moving_averages()
+# 		# 	LTF_data = LTF_MovingAverage.calculate_moving_averages()
+   
+# 		# 	latest = data.iloc[-1]
+# 		# 	current_price = latest['close']
+			
+# 		# 	client.Ratesdata = data
+# 		# 	print(client.Ratesdata)
+
+# 		# 	plotter.plot_charts(
+# 		# 			client.Ratesdata, 
+# 		# 			client.Ratesdata['close'].rolling(window=50).mean(),
+# 		# 			client.Ratesdata['close'].rolling(window=100).mean())
+	 
+# 		# 	# Check if the price is within the threshold of moving averages
+# 		# 	trade.run_Trades(latest, current_price, THRESHOLD, symbol)
+# 		# 	time.sleep(60)
+		
+# 	with ft.ThreadPoolExecutor(max_workers=len(symbols)) as executor:
+# 		executor.map(lambda symbol: 
+# 			MA.MovingAverageCrossover(symbol, 
+#                              		data=client.data).multi_Timeframe_Synthesis(symbol, 
+# 																																		client, 
+# 																																		client.TF,  
+# 																																		THRESHOLD))
+# 	client.shutdown()
