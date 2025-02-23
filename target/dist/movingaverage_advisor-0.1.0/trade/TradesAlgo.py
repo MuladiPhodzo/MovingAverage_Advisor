@@ -1,7 +1,4 @@
 import MetaTrader5 as mt5
-import pandas as pd
-import time
-import numpy as np
 
 class MT5TradingAlgorithm:
     def __init__(self, data, symbol, lot_size=0.1, magic_number=1000, market_Bias=int):

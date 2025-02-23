@@ -1,7 +1,7 @@
 import Advisor
-import MovingAverage as MA
+import MovingAverages.MovingAverage as MA
 import MetaTrader5 as mt5
-import TradesAlgo as algorithim
+import Trade.TradesAlgo as algorithim
 import time
 import concurrent.futures as ft
 

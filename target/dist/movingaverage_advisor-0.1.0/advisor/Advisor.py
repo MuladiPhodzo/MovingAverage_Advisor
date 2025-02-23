@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 import MetaTrader5 as mt5
-import MovingAverage as MA
+import MovingAverages.MovingAverage as MA
 import os
 import concurrent.futures as ft
 

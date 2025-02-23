@@ -1,7 +1,7 @@
 import Advisor
-import MovingAverage as MA
+import MovingAverages.MovingAverage as MA
 import MetaTrader5 as mt5
-import TradesAlgo as algorithim
+import Trade.TradesAlgo as algorithim
 import time
 import concurrent.futures as ft
 
@@ -39,8 +39,9 @@ class RunAdvisorBot:
 			current_price = ltf_latest['close']
 
 			market_Bias = "Bullish" if htf_latest['Fast_MA'] > htf_latest['Slow_MA'] else "Bearish"
+			ltf_Bias = "Buy" if ltf_latest["Fast_MA"] > ltf_latest['Slow_MA'] else "Sell"
 
-			trade.run_Trades(market_Bias, ltf_latest, current_price, client.THRESHOLD, symbol)
+			trade.run_Trades(market_Bias, ltf_Bias, ltf_latest, current_price, client.THRESHOLD, symbol)
 			time.sleep(60)
 
 if __name__ == "__main__":

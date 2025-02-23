@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 import MetaTrader5 as mt5
-import MovingAverage as MA
+import MovingAverages.MovingAverage as MA
 import os
 import concurrent.futures as ft
 
@@ -49,7 +49,7 @@ class MetaTrader5Client:
 				return False
 		return True
 
-	def get_live_data(self, symbol, timeframe, bars=100):
+	def get_live_data(self, symbol, timeframe, bars=1000):
 		"""
 		Fetch live market data for a given symbol and timeframe.
 		Parameters:

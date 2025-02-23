@@ -1,7 +1,4 @@
 import MetaTrader5 as mt5
-import pandas as pd
-import time
-import numpy as np
 
 class MT5TradingAlgorithm:
     def __init__(self, data, symbol, lot_size=0.1, magic_number=1000, market_Bias=int):
@@ -17,7 +14,7 @@ class MT5TradingAlgorithm:
         self.magic_number = magic_number
         self.current_position = None  # Track 'buy', 'sell', or None
 
-    def place_order(self, action, stop_loss=100, take_profit=250):
+    def place_order(self, action, stop_loss=100, take_profit=300):
         """
         Place a buy or sell order.
         :param action: 'buy' or 'sell'.
@@ -59,14 +56,14 @@ class MT5TradingAlgorithm:
         self.current_position = action
         return True
 
-    def run_Trades(self, market_bias, ltf_latest, current_price, THRESHOLD, symbol ):
+    def run_Trades(self, market_bias, ltf_Bias,ltf_latest, current_price, THRESHOLD, symbol ):
       
       if abs(current_price - ltf_latest['Fast_MA']) <= THRESHOLD or abs(current_price - ltf_latest['Slow_MA']) <= THRESHOLD:
-        if market_bias == "Bullish" and ltf_latest["Fast_MA"] > ltf_latest["Slow_MA"]:
+        if market_bias == "Bullish" and ltf_Bias == 'Buy' and current_price > ltf_latest['Slow_MA']:
             print(f"{symbol} - Confirmed Bullish Signal - Placing BUY order")
             self.place_order(symbol, "buy")
             self.data['Trades'] = 'Buy'
-        elif market_bias == "Bearish" and ltf_latest["Fast_MA"] < ltf_latest["Slow_MA"]:
+        elif market_bias == "Bearish" and ltf_Bias == 'Sell' and current_price < ltf_latest['Slow_MA']:
             print(f"{symbol} - Confirmed Bearish Signal - Placing SELL order")
             self.place_order(symbol, "sell")
       else:

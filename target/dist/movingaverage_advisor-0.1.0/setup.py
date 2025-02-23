@@ -31,8 +31,8 @@ if __name__ == '__main__':
         ],
         keywords = '',
 
-        author = '',
-        author_email = '',
+        author = 'Phodzo Muladi',
+        author_email = 'muladi.lione@gmail.com',
         maintainer = '',
         maintainer_email = '',
 
@@ -42,7 +42,11 @@ if __name__ == '__main__':
         project_urls = {},
 
         scripts = [],
-        packages = ['advisor'],
+        packages = [
+            'MovingAverages',
+            'Trade',
+            'advisor'
+        ],
         namespace_packages = [],
         py_modules = ['database.MySQLdatabase'],
         entry_points = {},
