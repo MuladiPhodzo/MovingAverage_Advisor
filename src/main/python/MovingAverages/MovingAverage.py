@@ -21,14 +21,6 @@ class MovingAverageCrossover:
 		self.results = None
 		self.symbol = symbol
 
-	def get_rates_from(self, symbol, timeframe, start_time, count):
-		"""Fetch historical rates from MetaTrader 5."""
-  
-		rates = mt5.copy_rates_from(symbol, timeframe, start_time, count)
-		if rates is None:
-				print(f"Failed to retrieve {symbol} rates, error code:", mt5.last_error())
-		return rates
-
 	def calculate_moving_averages(self):
 		"""Calculate the fast and slow moving averages."""
   
@@ -67,6 +59,8 @@ class MovingAverageCrossover:
 		self.data = self.data.dropna()
 		print(self.data[['Signal', 'Crossover']].tail())
 		print("Signals and crossovers generated.")
+  
+		return self.data, f'Signals and crossovers generated.'
 	
 	def toCSVFile(self, rates):
 			# Convert rates to DataFrame
@@ -115,7 +109,7 @@ class MovingAverageCrossover:
 
 	def backtest_strategy(self):
 		"""Backtest the strategy by calculating strategy returns."""
-		self.toCSVFile(self.data)
+
 		self.data['Position'] = self.data['Signal'].shift(1)  # Avoid lookahead bias
 		self.data['Market_Returns'] = self.data['close'].pct_change()
 		self.data['Strategy_Returns'] = self.data['Market_Returns'] * self.data['Position']
@@ -171,7 +165,7 @@ class MovingAverageCrossover:
 		plt.legend(loc='upper left')
 		plt.show()
 	
-	def run_moving_average_strategy(self, symbol, timeframe, start_time, count):
+	def run_moving_average_strategy(self, symbol):
 		"""
 		Fetch rates data and apply the Moving Average Crossover strategy.
 

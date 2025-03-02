@@ -1,4 +1,12 @@
 import Advisor
+import sys
+import os
+
+# Add src/main/python to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+
+sys.path.append("src\main\python\MovingAverages")
+# Now import MovingAverages
 import MovingAverages.MovingAverage as MA
 import MetaTrader5 as mt5
 import Trade.TradesAlgo as algorithim
