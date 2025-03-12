@@ -1,14 +1,15 @@
 import MetaTrader5 as mt5
+import pandas as pd
 
 class MT5TradingAlgorithm:
-    def __init__(self, data, symbol, lot_size=0.1, magic_number=1000, market_Bias=int):
+    def __init__(self, symbol, lot_size=0.1, magic_number=1000, market_Bias=int):
         """
         Initialize the MT5 trading algorithm.
         :param symbol: The trading symbol (e.g., 'USDJPY').
         :param lot_size: The size of each trade.
         :param magic_number: Unique identifier for this strategy's trades.
         """
-        self.data = data
+        self.TradesData = None
         self.symbol = symbol
         self.lot_size = lot_size
         self.magic_number = magic_number
@@ -52,20 +53,25 @@ class MT5TradingAlgorithm:
             print(f"Order failed: {result.retcode}")
             return False
 
+        
         print(f"{action.capitalize()} order placed at {price}.")
+        self.TradesData = pd.DataFrame(request)
+        self.TradesData = self.TradesData.drop(columns=['type_time', 'comment', 'type_filling', 'deviation'])
         self.current_position = action
         return True
 
     def run_Trades(self, market_bias, ltf_Bias,ltf_latest, current_price, THRESHOLD, symbol ):
       
       if abs(current_price - ltf_latest['Fast_MA']) <= THRESHOLD or abs(current_price - ltf_latest['Slow_MA']) <= THRESHOLD:
-        if market_bias == "Bullish" and ltf_Bias == 'Buy' and current_price > ltf_latest['Slow_MA']:
+        if market_bias == "Bullish" and ltf_Bias == 'Buy' and current_price > ltf_latest['Fast_MA']:
             print(f"{symbol} - Confirmed Bullish Signal - Placing BUY order")
-            self.place_order(symbol, "buy")
-            self.data['Trades'] = 'Buy'
-        elif market_bias == "Bearish" and ltf_Bias == 'Sell' and current_price < ltf_latest['Slow_MA']:
+            self.place_order("buy")
+            
+        elif market_bias == "Bearish" and ltf_Bias == 'Sell' and current_price < ltf_latest['Fast_MA']:
             print(f"{symbol} - Confirmed Bearish Signal - Placing SELL order")
-            self.place_order(symbol, "sell")
+            self.place_order("sell")
+            self.TradesData = ltf_latest
+            
       else:
           print(f"{symbol} - No valid entry signal")
             

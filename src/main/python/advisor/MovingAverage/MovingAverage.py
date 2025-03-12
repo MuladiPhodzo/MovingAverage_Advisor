@@ -60,12 +60,12 @@ class MovingAverageCrossover:
 		print(self.data[['Signal', 'Crossover']].tail())
 		print("Signals and crossovers generated.")
   
-		return self.data, f'Signals and crossovers generated.'
+		return self.data
 	
 	def toCSVFile(self, rates):
 			# Convert rates to DataFrame
 			self.data = pd.DataFrame(rates)
-			file_path = f'src/main/python/Logs/Rates/{self.symbol}_rates.csv'
+			file_path = f'Logs/Rates/{self.symbol}_rates.csv'
 			# Ensure the directory exists before writing
 			os.makedirs(os.path.dirname(file_path), exist_ok=True)
 

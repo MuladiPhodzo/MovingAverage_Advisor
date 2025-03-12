@@ -11,8 +11,8 @@ import unittest
 
 class Test_Advisor(unittest.TestCase):  
     def testInitializor(self):
-        symbols = ["USDJPY", "USDCHF", "USDCAD", "USDZAR", "EURUSD"]
-        client = Client.MetaTrader5Client(symbols)
+        
+        client = Client.MetaTrader5Client()
         
         init = client.initialize()
         
@@ -20,8 +20,8 @@ class Test_Advisor(unittest.TestCase):
         
         
     def testSymbolAvailability(self):
-        symbols = ["USDJPY", "USDCHF", "USDCAD", "USDZAR", "EURUSD"]
-        client = Client.MetaTrader5Client(symbols)
+        
+        client = Client.MetaTrader5Client()
         
         client.initialize()
         availability = client.check_symbols_availability()
@@ -29,10 +29,10 @@ class Test_Advisor(unittest.TestCase):
         self.assertEqual(availability, True)
         
     def test_GetLiveData(self):
-        symbols = ["USDJPY", "USDCHF", "USDCAD", "USDZAR", "EURUSD"]
+        
         timeframes = mt5.TIMEFRAME_H1
         
-        client = Client.MetaTrader5Client(symbols)
+        client = Client.MetaTrader5Client()
         
         client.initialize()
         data = client.get_live_data("USDJPY", timeframes)
@@ -41,13 +41,13 @@ class Test_Advisor(unittest.TestCase):
         self.assertIsInstance(data, pd.DataFrame)
         
     def test_GetMultiTFData(self):
-        symbols = ["USDJPY", "USDCHF", "USDCAD", "USDZAR", "EURUSD"]
+        
         timeframes = {
             "HTF": mt5.TIMEFRAME_H4,
             "LTF": mt5.TIMEFRAME_H1
         }
         
-        client = Client.MetaTrader5Client(symbols)
+        client = Client.MetaTrader5Client()
         
         client.initialize()
         data = client.get_multi_tf_data("USDJPY", timeframes)

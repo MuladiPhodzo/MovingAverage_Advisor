@@ -1,4 +1,3 @@
-from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
@@ -10,8 +9,8 @@ register_matplotlib_converters()
 
 
 class MetaTrader5Client:
-	def __init__(self, symbols, threshold = 0.0005):
-		self.symbols = symbols
+	def __init__(self, threshold = 0.0005):
+		self.symbols = []
 		self.THRESHOLD = threshold
 		self.data = None
 		self.account_info = None
@@ -24,9 +23,14 @@ class MetaTrader5Client:
 				print("initialize() failed, error code =", mt5.last_error())
 				mt5.shutdown()
 				return False
+
 		finally:
-			self.check_symbols_availability()
-		return True
+			self.account_info = mt5.account_info()
+			self.terminal_info = mt5.terminal_info()
+			print('searching for available symbols...')
+			self.symbols = self.get_Symbols()
+			
+			return True
 
 	def check_symbols_availability(self):
 		"""
@@ -47,6 +51,10 @@ class MetaTrader5Client:
 				return False
 		return True
 
+	def get_Symbols(self):
+		symbols = [s.name for s in mt5.symbols_get() if 'USD' in s.name]
+		return symbols
+
 	def get_live_data(self, symbol, timeframe, bars=1000):
 		"""
 		Fetch live market data for a given symbol and timeframe.
@@ -61,8 +69,6 @@ class MetaTrader5Client:
 		- A message if data retrieval fails.
 		- The retrieved market data.
 		"""
-		print(f"client.TF: {timeframe}, Type: {type(timeframe)}")
-
 		rates = mt5.copy_rates_from_pos(symbol, timeframe, 0, bars)
 		if rates is None:
 				print(f"Failed to get data for {symbol}")
@@ -90,7 +96,7 @@ class MetaTrader5Client:
 		self.data = multi_tf_data
 		return multi_tf_data
 
-	def toCSVFile(self, rates, file_path):
+	def toCSVFile(self, file_path):
 		"""
 		Save ratesData to a CSV file.
 		- Creates the file if it doesn't exist.
