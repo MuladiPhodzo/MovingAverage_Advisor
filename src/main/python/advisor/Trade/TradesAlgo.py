@@ -1,5 +1,6 @@
 import MetaTrader5 as mt5
 import pandas as pd
+import datetime as dt
 
 class MT5TradingAlgorithm:
     def __init__(self, symbol, lot_size=0.1, magic_number=1000, market_Bias=int):
@@ -22,7 +23,7 @@ class MT5TradingAlgorithm:
         """
         # Define order type
         order_type = mt5.ORDER_TYPE_BUY if action == 'buy' else mt5.ORDER_TYPE_SELL
-
+        print(f"🟢 Placing {order_type.upper()} order...")
         # Get symbol info
         symbol_info = mt5.symbol_info(self.symbol)
         point = symbol_info.point
@@ -38,8 +39,8 @@ class MT5TradingAlgorithm:
             "volume": self.lot_size,
             "type": order_type,
             "price": price,
-            "sl": price - stop_loss * point if order_type == mt5.ORDER_BUY else price + stop_loss * point,
-            "tp": price + take_profit * point if order_type == mt5.ORDER_BUY else price - take_profit * point,
+            "sl": price - stop_loss * point if order_type == mt5.ORDER_TYPE_BUY else price + stop_loss * point,
+            "tp": price + take_profit * point if order_type == mt5.ORDER_TYPE_BUY else price - take_profit * point,
             "deviation": 10,
             "magic": self.magic_number,
             "comment": f"{action.capitalize()} trade by Moving Average strategy",
@@ -62,43 +63,21 @@ class MT5TradingAlgorithm:
 
     def run_Trades(self, market_bias, ltf_Bias,ltf_latest, current_price, THRESHOLD, symbol ):
       
-      if abs(current_price - ltf_latest['Fast_MA']) <= THRESHOLD or abs(current_price - ltf_latest['Slow_MA']) <= THRESHOLD:
+      if abs(current_price - ltf_latest['Fast_MA']) <= THRESHOLD:
         if market_bias == "Bullish" and ltf_Bias == 'Buy' and current_price > ltf_latest['Fast_MA']:
             print(f"{symbol} - Confirmed Bullish Signal - Placing BUY order")
             self.place_order("buy")
-            
+            self.TradesData = ltf_latest
         elif market_bias == "Bearish" and ltf_Bias == 'Sell' and current_price < ltf_latest['Fast_MA']:
             print(f"{symbol} - Confirmed Bearish Signal - Placing SELL order")
             self.place_order("sell")
             self.TradesData = ltf_latest
             
       else:
-          print(f"{symbol} - No valid entry signal")
+          print(f'{self.symbol}-current price: {current_price} Fast_MA: {ltf_latest["Fast_MA"]}'),
+          print(f"{dt.datetime.now()} {symbol} - No valid entry signal ")
             
     def close(self):
         """Shutdown MT5 connection."""
         mt5.shutdown()
         print("Disconnected from MetaTrader 5.")
-
-# Example usage
-'''if __name__ == "__main__":
-    # Sample data (replace with your DataFrame)
-    data = {
-        'time': [
-            "2024-11-18 03:15:00", "2024-11-18 03:30:00", "2024-11-18 03:45:00",
-            "2024-11-18 04:00:00", "2024-11-18 04:15:00", "2024-11-28 10:00:00",
-            "2024-11-28 10:15:00", "2024-11-28 10:30:00"
-        ],
-        'Signal': [-1, 1, 0, 1, -1, 1, 0, -1]
-    }
-    df = pd.DataFrame(data)
-    df['time'] = pd.to_datetime(df['time'])
-    df.set_index('time', inplace=True)
-
-    # Initialize and execute trading algorithm
-    mt5_algo = MT5TradingAlgorithm(symbol="USDJPY")
-    try:
-        mt5_algo.execute_trades(df)
-    finally:
-        mt5_algo.close()
-'''

@@ -1,199 +1,245 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import mplfinance as mpf
 import MetaTrader5 as mt5
 import os
 import numpy as np
 
 class MovingAverageCrossover:
 
-	def __init__(self,  symbol, data, fast_period=50, slow_period=200):
-		"""
-		Initialize the strategy with data and parameters.
-		
-		:param data: DataFrame containing historical data (must include 'close').
-		:param fast_period: Period for the fast-moving average.
-		:param slow_period: Period for the slow-moving average.
-		"""
-		self.data = data
-		self.fast_period = fast_period
-		self.slow_period = slow_period
-		self.signals = None
-		self.results = None
-		self.symbol = symbol
+    def __init__(self,  symbol, data, fast_period=50, slow_period=150):
+        """
+        Initialize the strategy with data and parameters.
+        
+        :param data: DataFrame containing historical data (must include 'close').
+        :param fast_period: Period for the fast-moving average.
+        :param slow_period: Period for the slow-moving average.
+        """
+        ltf_data = data
+        self.entries = None
+        self.fast_period = fast_period
+        self.slow_period = slow_period
+        self.signals = None
+        self.results = None
+        self.symbol = symbol
 
-	def calculate_moving_averages(self):
-		"""Calculate the fast and slow moving averages."""
+    def calculate_moving_averages(self, data):
+        """Calculate the fast and slow moving averages."""
+        if 'close' not in data.columns:
+            raise ValueError("'close' column is missing in the data.")
   
-		if 'close' not in self.data.columns:
-				raise ValueError("'close' column is missing in the data.")
+        data['Fast_MA'] = data['close'].rolling(window=self.fast_period).mean()
+        data['Slow_MA'] = data['close'].rolling(window=self.slow_period).mean()
+        data['Signal'] = np.where(data['Fast_MA'] > data['Slow_MA'], 1, 
+                          np.where(data['Fast_MA'] < data['Slow_MA'], -1, 0))
   
-		self.data['Fast_MA'] = self.data['close'].rolling(window=self.fast_period).mean()
-		self.data['Slow_MA'] = self.data['close'].rolling(window=self.slow_period).mean()
-		self.data['Signal'] = np.where(self.data['Fast_MA'] > self.data['Slow_MA'], 1, 
-						  np.where(self.data['Fast_MA'] < self.data['Slow_MA'], -1, 0))
+        data['Crossover'] = data['Signal'].diff()
+        data['Bias'] = np.where(data['Fast_MA'] > data['Slow_MA'], "Bullish", "Bearish")
+
+
+        self.data = data.dropna()
   
-		self.data['Crossover'] = self.data['Signal'].diff()
-		self.data['Bias'] = np.where(self.data['Fast_MA'] > self.data['Slow_MA'], "Bullish", "Bearish")
+        print("Moving averages calculated.")
+        return self.data	
+
+    def identify_entry_levels(self, HTS_data: pd.DataFrame, LTS_data: pd.DataFrame):
+        """
+        _summary_
+        Identify entry levels (buy and sell) based on crossovers.
+        requires HTS_data and LTS_data to have 'Bias' column.
+
+        Returns:
+            - LTS_data: DataFrame with entry levels and stop loss/take profit levels.
+            _type_: _DataFrame_
+        """        
+        if 'Bias' not in HTS_data.columns or 'Bias' not in LTS_data.columns:
+            raise ValueError("'Bias' column is missing in the data.")   
+        
+        # Define constants outside the loop
+        sl_distance = 0.003
+        tp_distance = 0.01
+        threshold = 50 * 0.01 if self.symbol == 'USDJPY' else 0.0050  # 50 pips × pip size
+
+        for i in range(len(LTS_data)):
+            row = LTS_data.iloc[i]
+            ltf_time = pd.to_datetime(row['time'])
+
+            # Match HTF row
+            htf_match = HTS_data[HTS_data['time'] <= ltf_time]
+            if htf_match.empty:
+                continue
+
+            htf_row = htf_match.iloc[-1]
+            market_bias = htf_row['Bias']
+            ltf_bias = row['Bias']
+            
+            # Derive LTF label
+            ltf_Bias_label = "Buy" if ltf_bias == 'Bullish' else "Sell"
+
+            # Calculate Range
+            range_value = abs(row['close'] - row['Fast_MA'])
+
+            # Set columns cleanly
+            LTS_data.loc[i, 'Market_bias'] = market_bias
+            LTS_data.loc[i, 'ltf_bias'] = ltf_bias
+            LTS_data.loc[i, 'Range'] = range_value
+
+            if range_value <= threshold:
+                if market_bias == 'Bullish' and ltf_Bias_label == 'Buy' and row['close'] > row['Fast_MA']:
+                    LTS_data.loc[i, 'Entry'] = 'Buy'
+                    LTS_data.loc[i, 'Level'] = row['close'] - 0.00236
+                    LTS_data.loc[i, 'SL'] = row['close'] - sl_distance
+                    LTS_data.loc[i, 'TP'] = row['close'] + tp_distance
+
+                elif market_bias == 'Bearish' and ltf_Bias_label == 'Sell' and row['close'] < row['Fast_MA']:
+                    LTS_data.loc[i, 'Entry'] = 'Sell'
+                    LTS_data.loc[i, 'Level'] = row['close'] - 0.00236
+                    LTS_data.loc[i, 'SL'] = row['close'] + sl_distance
+                    LTS_data.loc[i, 'TP'] = row['close'] - tp_distance
+
+            else:
+                LTS_data.loc[i, 'Entry'] = None
+                LTS_data.loc[i, 'Level'] = None
+                LTS_data.loc[i, 'SL'] = None
+                LTS_data.loc[i, 'TP'] = None
+
+
+        # Clean up bad columns created by tuple headers (from Excel maybe?)
+        cleaned_data = LTS_data.drop(columns=['tick_volume', 'real_volume', 'spread', 'Signal'])
+        trades = cleaned_data.copy().dropna()
+        
+        print(f'{self.symbol}-entries:\n {trades.head(50)}')
+            
+        return trades
+                
+            
+        print("Entry levels identified.")
+
+    def save_signals_to_csv(self, data, file_name="src/main/python/advisor/Logs"):
+        """
+        Save identified entry levels to a CSV file.
+        - Creates the file if it doesn't exist.
+        - Appends to the file if it already exists.
+        """
   
-		self.data = self.data.drop(columns=['tick_volume', 'spread', 'real_volume'])
-		self.data = self.data.dropna()
-  
-		print("Moving averages calculated.")
-		return self.data	
+        if data is not None:
+            file_exists = os.path.isfile(file_name)
+            if not file_exists:
+                data.to_csv(file_name, index=False, mode='w')
+                print(f"New file created and entry levels saved to {file_name}.")
+            else:
+                data.to_csv(file_name, index=False, mode='a', header=False)
+                print(f"Entry levels appended to existing file {file_name}.")
+        else:
+                print("No signals to save. Please run 'identify_entry_levels()' first.")
 
-	def generate_signals(self):
-		"""Generate buy and sell signals based on moving average crossover."""
-  
-		if 'Fast_MA' not in self.data.columns or 'Slow_MA' not in self.data.columns:
-				raise ValueError("Moving averages are missing. Please run 'calculate_moving_averages()' first.")
-		
-		conditions = [
-			self.data['Fast_MA'] > self.data['Slow_MA'],  # Buy condition
-			self.data['Fast_MA'] < self.data['Slow_MA']   # Sell condition
-		]
+    def backtest_strategy(self):
+        """Backtest the strategy by calculating strategy returns."""
 
-		choices = [1, -1]  # Buy = 1, Sell = -1
-		self.data['Signal'] = np.select(conditions, choices, default=0)
-		self.data['Crossover'] = self.data['Signal'].diff() 
+        self.data['Position'] = self.data['Entry'].shift(1)  # Avoid lookahead bias
+        self.data['Market_Returns'] = self.data['close'].pct_change()
+        self.data['Strategy_Returns'] = self.data['Market_Returns'] * self.data['Position']
+        self.data['Cumulative_Market_Returns'] = (1 + self.data['Market_Returns']).cumprod()
+        self.data['Cumulative_Strategy_Returns'] = (1 + self.data['Strategy_Returns']).cumprod()
+        self.results = self.data.dropna().copy() 
+        print("Backtest completed.")
+        return self.results
 
-		self.data = self.data.dropna()
-		print(self.data[['Signal', 'Crossover']].tail())
-		print("Signals and crossovers generated.")
-  
-		return self.data
-	
-	def toCSVFile(self, rates):
-			# Convert rates to DataFrame
-			self.data = pd.DataFrame(rates)
-			file_path = f'Logs/Rates/{self.symbol}_rates.csv'
-			# Ensure the directory exists before writing
-			os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    def plot_performance(self):
+        """Visualize the strategy performance against market performance."""
+        if self.results is None:
+                raise ValueError("No results available. Run backtest_strategy() first.")
+        
+        plt.figure(figsize=(12, 6))
+        plt.plot(self.results.index, self.results['Cumulative_Market_Returns'], label='Market Returns', color='blue')
+        plt.plot(self.results.index, self.results['Cumulative_Strategy_Returns'], label='Strategy Returns', color='green')
+        plt.title('Moving Average Crossover Strategy Performance')
+        plt.legend()
+        plt.show()
+            
+    def plot_charts(self, ltf_data):
+        if 'Entry' not in ltf_data.columns:
+            raise ValueError("Error: 'Entry' column is missing in `ltf_data`. Check data processing.")
+        if 'close' not in ltf_data.columns or ltf_data['close'].empty:
+            raise ValueError("No Close data available")
 
-			# Write DataFrame to CSV, creating the file if it doesn’t exist
-			self.data.to_csv(file_path, index=True, mode='w', header=True)
-	 
-	def identify_entry_levels(self):
-		"""Identify entry levels (buy and sell) based on crossovers."""
-		if 'Crossover' not in self.data.columns:
-				raise ValueError("Crossover data is missing. Please run 'generate_signals()' first.")
+        # Ensure both datasets use datetime index for consistency
+        if not isinstance(self.data.index, pd.DatetimeIndex):
+            self.data.index = pd.to_datetime(self.data.index)
 
-		data_with_time = self.data.reset_index()
-		buy_signals = data_with_time[data_with_time['Signal'] == 1]
-		sell_signals = data_with_time[data_with_time['Signal'] == -1]
+        # Check for abnormally large timestamp (only if needed)
+        # max_time = ltf_data['time'].max()
+        # if isinstance(max_time, pd.Timestamp) and max_time.timestamp() > 1e11:
+        #     raise ValueError("Abnormally large timestamp detected in 'time' column.")
 
-		entry_levels = pd.concat([
-				buy_signals[['time', 'close']].rename(columns={'close': 'Buy_Level'}),
-				sell_signals[['time', 'close']].rename(columns={'close': 'Sell_Level'})
-		], axis=1)
+        # else:
+        #     ltf_data['time'] = pd.to_datetime(ltf_data['time'], unit='s')
+        #     ltf_data.set_index('time', inplace=True)
+        # Only keep rows where the index (or time column) is not null
+        ltf_data = ltf_data[ltf_data.index.notna()]
 
-		self.signals = entry_levels.reset_index(drop=True)
-		print("Entry levels identified.")
+        plt.figure(figsize=(14, 6))
 
-	def save_signals_to_csv(self, file_name="src/main/python/Logs"):
-		"""
-		Save identified entry levels to a CSV file.
-		- Creates the file if it doesn't exist.
-		- Appends to the file if it already exists.
-		"""
-  
-		if self.signals is not None:
-			file_exists = os.path.isfile(file_name)
-			if not file_exists:
-				self.signals.to_csv(file_name, index=False, mode='w')
-				print(f"New file created and entry levels saved to {file_name}.")
-			else:
-				self.signals.to_csv(file_name, index=False, mode='a', header=False)
-				print(f"Entry levels appended to existing file {file_name}.")
-		else:
-				print("No signals to save. Please run 'identify_entry_levels()' first.")
+        # Plot market data (uses self.data.index)
 
-	def backtest_strategy(self):
-		"""Backtest the strategy by calculating strategy returns."""
+        plt.plot(ltf_data.index, ltf_data['close'], label="Close", color='black')
+        plt.plot(ltf_data.index, ltf_data['Fast_MA'], label=f"Fast MA ({self.fast_period})", color='blue')
+        plt.plot(ltf_data.index, ltf_data['Slow_MA'], label=f"Slow MA ({self.slow_period})", color='red')
+        
+        plt.fill_between(ltf_data.index, ltf_data['Fast_MA'], ltf_data['Slow_MA'], where=(ltf_data['Fast_MA'] > ltf_data['Slow_MA']), color='green', alpha=0.3, label='Bullish Zone')
+        plt.fill_between(ltf_data.index, ltf_data['Fast_MA'], ltf_data['Slow_MA'], where=(ltf_data['Fast_MA'] < ltf_data['Slow_MA']), color='red', alpha=0.3, label='Bearish Zone')
+        plt.fill_between(ltf_data.index, ltf_data['Fast_MA'], ltf_data['close'], where=(ltf_data['Fast_MA'] - ltf_data['close'] <= 0.0100), color='yellow', alpha=0.3, label='Range')
 
-		self.data['Position'] = self.data['Signal'].shift(1)  # Avoid lookahead bias
-		self.data['Market_Returns'] = self.data['close'].pct_change()
-		self.data['Strategy_Returns'] = self.data['Market_Returns'] * self.data['Position']
-		self.data['Cumulative_Market_Returns'] = (1 + self.data['Market_Returns']).cumprod()
-		self.data['Cumulative_Strategy_Returns'] = (1 + self.data['Strategy_Returns']).cumprod()
-		self.results = self.data.dropna().copy() 
-		print("Backtest completed.")
-		return self.results
+        # Plot Buy signals
+        # Plot Buy signals
+        buy_signals = ltf_data[ltf_data['Entry'] == 'Buy']
+        if not buy_signals.empty:
+            plt.scatter(buy_signals.index, buy_signals['Entry'],
+                        color='green', marker='^', s=100, label='Buy Signal')
 
-	def plot_performance(self):
-		"""Visualize the strategy performance against market performance."""
-		if self.results is None:
-				raise ValueError("No results available. Run backtest_strategy() first.")
-		
-		plt.figure(figsize=(12, 6))
-		plt.plot(self.results.index, self.results['Cumulative_Market_Returns'], label='Market Returns', color='blue')
-		plt.plot(self.results.index, self.results['Cumulative_Strategy_Returns'], label='Strategy Returns', color='green')
-		plt.title('Moving Average Crossover Strategy Performance')
-		plt.legend()
-		plt.show()
-			
-	def plot_charts(self):
-		if self.results is None:
-				raise ValueError("Error: `self.results` is None. Run `backtest_strategy()` before plotting.")
-		
-		if 'Crossover' not in self.results.columns:
-				raise ValueError("Error: 'Crossover' column is missing in `self.results`. Check data processing.")
 
-		if 'close' not in self.data.columns or self.data['close'].empty:
-				raise ValueError("No Close data available")
+        # Plot Sell signals
+        sell_signals = ltf_data[ltf_data['Entry'] == 'Sell']
+        if not sell_signals.empty:
+            plt.scatter(sell_signals.index, sell_signals['Entry'], 
+                color='red', marker='v', s=100, label='Sell Signal')
 
-		plt.figure(figsize=(12, 6))
+        plt.title(f"{self.symbol}-Moving Average Entry Signals")
+        plt.xlabel("Time")
+        plt.ylabel("Price")
+        plt.legend()
+        plt.grid(True)
+        plt.gcf().autofmt_xdate()
+        plt.tight_layout()
+        plt.show()
 
-		# Plot the close price
-		plt.plot(self.data.index, self.data['close'], label="Close", color='black')
 
-		# Plot the fast and slow moving averages
-		plt.plot(self.data.index, self.data['Fast_MA'], label=f"Fast MA ({self.fast_period})", color='blue')
-		plt.plot(self.data.index, self.data['Slow_MA'], label=f"Slow MA ({self.slow_period})", color='red')
+        # Add title and legend
+        
+    
+    def run_moving_average_strategy(self, symbol, data, MA: 'MovingAverageCrossover'):
+        """
+        Fetch rates data and apply the Moving Average Crossover strategy.
 
-		# Plot buy signals (crossover == 2)
-		plt.plot(self.results.loc[self.results['Crossover'] == 2].index, 
-						self.results.loc[self.results['Crossover'] == 2, 'Fast_MA'], 
-						'^', color='green', markersize=12, label="Buy Signal")
+        :param symbol: The symbol to fetch data for (e.g., 'EURUSD').
+        :param timeframe: Timeframe for the rates (e.g., mt5.TIMEFRAME_M15).
+        :param start_time: Starting datetime for fetching rates.
+        :param count: Number of bars to fetch.
+        """
+    
+        ltf_data  = data['LTF']
+        htf_data = data['HTF']
+        
+        if data is None:
+            print(f"Failed to retrieve data for {symbol}.")
+            return None
+        
+        ltf_data = self.identify_entry_levels(ltf_data, htf_data)
+        self.save_signals_to_csv(file_name=f"src/main/python/Advisor/Logs/{self.symbol}_entry_levels.csv", data=ltf_data)
+        
+        # results = self.backtest_strategy()
 
-		# Plot sell signals (crossover == -2)
-		plt.plot(self.results.loc[self.results['Crossover'] == -2].index, 
-						self.results.loc[self.results['Crossover'] == -2, 'Fast_MA'], 
-						'v', color='red', markersize=12, label="Sell Signal")
-
-		# Add title and legend
-		plt.title('Moving Average Crossover Signals')
-		plt.legend(loc='upper left')
-		plt.show()
-	
-	def run_moving_average_strategy(self, symbol):
-		"""
-		Fetch rates data and apply the Moving Average Crossover strategy.
-
-		:param symbol: The symbol to fetch data for (e.g., 'EURUSD').
-		:param timeframe: Timeframe for the rates (e.g., mt5.TIMEFRAME_M15).
-		:param start_time: Starting datetime for fetching rates.
-		:param count: Number of bars to fetch.
-		"""
-		# Fetch data
-		rates = self.data
-		
-		if rates is None:
-				print(f"Failed to retrieve data for {symbol}.")
-				return None
-
-		# Convert rates to a DataFrame
-		rates_frame = pd.DataFrame(rates)
-		rates_frame['time'] = pd.to_datetime(rates_frame['time'], unit='s')
-		rates_frame.set_index('time', inplace=True)
-
-		# Apply the strategy
-		strategy = MovingAverageCrossover( self.symbol ,rates_frame, self.fast_period, self.slow_period)
-		strategy.calculate_moving_averages()
-		strategy.generate_signals()
-		strategy.identify_entry_levels()
-		results = strategy.backtest_strategy()
-
-		# Plot the results
-		#strategy.plot_charts()
-		strategy.plot_performance()
-		return (self.data ,results)
+        # Plot the results
+        self.plot_charts(ltf_data)
+        # self.plot_performance()s
+        
