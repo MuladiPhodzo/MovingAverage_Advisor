@@ -1,0 +1,14 @@
+__init__.py
+setup.py
+MovingAverage_Advisor.egg-info/PKG-INFO
+MovingAverage_Advisor.egg-info/SOURCES.txt
+MovingAverage_Advisor.egg-info/dependency_links.txt
+MovingAverage_Advisor.egg-info/namespace_packages.txt
+MovingAverage_Advisor.egg-info/top_level.txt
+MovingAverage_Advisor.egg-info/zip-safe
+advisor/Advisor.py
+advisor/RunAdvisorBot.py
+advisor/__init__.py
+advisor/MovingAverage/__init__.py
+advisor/Trade/TradesAlgo.py
+advisor/Trade/__init__.py

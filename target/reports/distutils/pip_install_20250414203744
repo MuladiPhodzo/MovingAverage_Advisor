@@ -1,0 +1,16 @@
+Defaulting to user installation because normal site-packages is not writeable
+Processing c:\users\ras51111\documents\myprojects\movingaverage_advisor\target\dist\movingaverage_advisor-0.1.0
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: MovingAverage_Advisor
+  Building wheel for MovingAverage_Advisor (pyproject.toml): started
+  Building wheel for MovingAverage_Advisor (pyproject.toml): finished with status 'done'
+  Created wheel for MovingAverage_Advisor: filename=movingaverage_advisor-0.1.0-py3-none-any.whl size=8488 sha256=ae6be3f78cb584ae3a7f6f75767486fec4aa7a6ae9ec3fef8e079f91ea5fefd4
+  Stored in directory: c:\users\ras51111\appdata\local\packages\pythonsoftwarefoundation.python.3.13_qbz5n2kfra8p0\localcache\local\pip\cache\wheels\39\6f\ad\0c1eae265b20b1744b149d3145e6e84b13c140d2a0ddfe5f0c
+Successfully built MovingAverage_Advisor
+Installing collected packages: MovingAverage_Advisor
+Successfully installed MovingAverage_Advisor-0.1.0

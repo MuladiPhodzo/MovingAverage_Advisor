@@ -43,12 +43,13 @@ if __name__ == '__main__':
 
         scripts = [],
         packages = [
-            'MovingAverages',
-            'Trade',
-            'advisor'
+            '.',
+            'advisor',
+            'advisor.MovingAverage',
+            'advisor.Trade'
         ],
         namespace_packages = [],
-        py_modules = ['database.MySQLdatabase'],
+        py_modules = [],
         entry_points = {},
         data_files = [],
         package_data = {},

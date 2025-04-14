@@ -1,0 +1,43 @@
+WARNING: '.' not a valid package name; please use only .-separated package names in setup.py
+running clean
+'build\lib' does not exist -- can't clean it
+'build\bdist.win-amd64' does not exist -- can't clean it
+'build\scripts-3.13' does not exist -- can't clean it
+running sdist
+running egg_info
+creating MovingAverage_Advisor.egg-info
+writing MovingAverage_Advisor.egg-info\PKG-INFO
+writing dependency_links to MovingAverage_Advisor.egg-info\dependency_links.txt
+writing namespace_packages to MovingAverage_Advisor.egg-info\namespace_packages.txt
+writing top-level names to MovingAverage_Advisor.egg-info\top_level.txt
+writing manifest file 'MovingAverage_Advisor.egg-info\SOURCES.txt'
+reading manifest file 'MovingAverage_Advisor.egg-info\SOURCES.txt'
+writing manifest file 'MovingAverage_Advisor.egg-info\SOURCES.txt'
+warning: sdist: standard file not found: should have one of README, README.rst, README.txt, README.md
+
+running check
+creating movingaverage_advisor-0.1.0
+creating movingaverage_advisor-0.1.0\MovingAverage_Advisor.egg-info
+creating movingaverage_advisor-0.1.0\advisor
+creating movingaverage_advisor-0.1.0\advisor\MovingAverage
+creating movingaverage_advisor-0.1.0\advisor\Trade
+copying files to movingaverage_advisor-0.1.0...
+copying __init__.py -> movingaverage_advisor-0.1.0
+copying setup.py -> movingaverage_advisor-0.1.0
+copying MovingAverage_Advisor.egg-info\PKG-INFO -> movingaverage_advisor-0.1.0\MovingAverage_Advisor.egg-info
+copying MovingAverage_Advisor.egg-info\SOURCES.txt -> movingaverage_advisor-0.1.0\MovingAverage_Advisor.egg-info
+copying MovingAverage_Advisor.egg-info\dependency_links.txt -> movingaverage_advisor-0.1.0\MovingAverage_Advisor.egg-info
+copying MovingAverage_Advisor.egg-info\namespace_packages.txt -> movingaverage_advisor-0.1.0\MovingAverage_Advisor.egg-info
+copying MovingAverage_Advisor.egg-info\top_level.txt -> movingaverage_advisor-0.1.0\MovingAverage_Advisor.egg-info
+copying MovingAverage_Advisor.egg-info\zip-safe -> movingaverage_advisor-0.1.0\MovingAverage_Advisor.egg-info
+copying advisor\Advisor.py -> movingaverage_advisor-0.1.0\advisor
+copying advisor\RunAdvisorBot.py -> movingaverage_advisor-0.1.0\advisor
+copying advisor\__init__.py -> movingaverage_advisor-0.1.0\advisor
+copying advisor\MovingAverage\__init__.py -> movingaverage_advisor-0.1.0\advisor\MovingAverage
+copying advisor\Trade\TradesAlgo.py -> movingaverage_advisor-0.1.0\advisor\Trade
+copying advisor\Trade\__init__.py -> movingaverage_advisor-0.1.0\advisor\Trade
+copying MovingAverage_Advisor.egg-info\SOURCES.txt -> movingaverage_advisor-0.1.0\MovingAverage_Advisor.egg-info
+Writing movingaverage_advisor-0.1.0\setup.cfg
+creating dist
+Creating tar archive
+removing 'movingaverage_advisor-0.1.0' (and everything under it)

@@ -16,7 +16,7 @@ class Test_Advisor(unittest.TestCase):
         
         init = client.initialize()
         
-        self.assertEqual(init, True)
+        self.assertEqual(init[0], True)
         
         
     def testSymbolAvailability(self):
@@ -50,7 +50,7 @@ class Test_Advisor(unittest.TestCase):
         client = Client.MetaTrader5Client()
         
         client.initialize()
-        data = client.get_multi_tf_data("USDJPY", timeframes)
+        data = client.get_multi_tf_data("USDJPY")
         print(data)
         self.assertTrue(data is not None)
         self.assertIsInstance(data, dict)

@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install PyBuilder
+RUN pip install pybuilder
+
+# Copy all source code
+COPY . .
+
+# Run PyBuilder build
+RUN pyb clean install
+
+# Default command to run the bot
+CMD ["python", "src/main/python/advisor/RunAdvisorBot.py"]
