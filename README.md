@@ -1,7 +1,3 @@
-Here's a clean and professional `README.md` file tailored for your Moving Average Advisor Bot project:
-
----
-
 ```markdown
 # 📈 MovingAverage Advisor Bot
 
@@ -33,7 +29,7 @@ MovingAverage_Advisor/
 │   └── database/
 │       └── MySQLdatabase.py   # Optional DB logging
 │
-├── strategies/
+├── NovingAverage/
 │   └── MovingAverage.py       # Strategy implementation
 │
 ├── Dockerfile                 # Docker container config
@@ -41,6 +37,7 @@ MovingAverage_Advisor/
 ├── requirements.txt           # Python dependencies
 ├── README.md                  # Project documentation
 └── .pybuilder/                # PyBuilder generated files
+
 ```
 
 ---

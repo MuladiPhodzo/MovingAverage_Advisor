@@ -1,12 +1,13 @@
 import pandas as pd
-
-# Now import MovingAverages
-import Advisor
-import MovingAverage as MA
-import MetaTrader5 as mt5
-import Trade.TradesAlgo as algorithim
 import time
 import concurrent.futures as ft
+import MetaTrader5 as mt5
+# Now import MovingAverages
+import Advisor
+import MovingAverage.MovingAverage as MA
+import Trade.TradesAlgo as algorithim
+import GUI.userInput as GUI
+
 
 
 class RunAdvisorBot:
@@ -58,27 +59,28 @@ class RunAdvisorBot:
 				HTF_data = htf_strategy.calculate_moving_averages(data["HTF"])
 				LTF_data = ltf_strategy.calculate_moving_averages(data["LTF"])
 
+				if "Fast_MA" not in LTF_data.columns or "Slow_MA" not in LTF_data.columns:
+					print(f'❌ Missing MA columns in LTF data for {symbol}')
+					continue
+
 				if HTF_data is None or LTF_data is None:
 					print(f'⚠️ Moving averages not calculated for {symbol}. Skipping...')
 					time.sleep(10)
 					continue
 
-				
-
 				htf_latest = HTF_data.iloc[-1]
 				ltf_latest = LTF_data.iloc[-1]
+    
 				current_price = ltf_latest['close']
-
 				market_Bias = "Bullish" if htf_latest['Fast_MA'] > htf_latest['Slow_MA'] else "Bearish"
 				ltf_Bias = "Buy" if ltf_latest["Fast_MA"] > ltf_latest['Slow_MA'] else "Sell"
 
-				print(f'📌 Trading Decision - {symbol}: Market Bias={market_Bias}, LTF Bias={ltf_Bias}')
 				print(f'{symbol}-current price: {current_price} Fast_MA: {ltf_latest["Fast_MA"]}')
 
 				trade = algorithim.MT5TradingAlgorithm(symbol)
 				trade.run_Trades(market_Bias, ltf_Bias, ltf_latest, current_price, client.THRESHOLD, symbol)
 
-				print(f'🛌 sleeping for 15 minutes....')
+				print(f'🛌{symbol} Thread sleeping for 15 minutes....')
 				time.sleep(900)  # 15 minutes
 
 		except Exception as e:
@@ -86,10 +88,10 @@ class RunAdvisorBot:
 
 if __name__ == "__main__":
 	import Advisor as Client
-
+	gui = GUI.UserGUI()
 	tempClient = Advisor.MetaTrader5Client()
 	res = tempClient.initialize()
-	print(f'res: {res}')
+	# gui.get_user_input(res[1])
 	bot = RunAdvisorBot()
 	bot.symbols = res[1]
 	# bot.backtest(bot.symbols )
