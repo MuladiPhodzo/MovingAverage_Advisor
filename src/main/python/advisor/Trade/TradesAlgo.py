@@ -24,10 +24,13 @@ class MT5TradingAlgorithm:
         try:
             # Define order type
             order_type = mt5.ORDER_TYPE_BUY if action == 'buy' else mt5.ORDER_TYPE_SELL
-            print(f"🟢 Placing {action.upper()} order...")
+            print(f"🟢 {self.symbol} Placing {action.upper()} order...")
 
             # Get symbol info
             symbol_info = mt5.symbol_info(self.symbol)
+            print(f"Can trade: {symbol_info.trade_mode}") 
+            print(symbol_info._asdict())
+
             if not symbol_info:
                 print(f"Symbol {self.symbol} not found, cannot place order.")
                 return False
@@ -51,21 +54,29 @@ class MT5TradingAlgorithm:
                 "type_filling": mt5.ORDER_FILLING_IOC,
             }
 
+            result = None
             # Send order
-            result = mt5.order_send(request)
-            print(f'Trade result: \n{result}')
+            if symbol_info.trade_mode == 0:
+                result = mt5.order_send(request)
+                if result is None:
+                    print("❌ mt5.order_send() returned None — check if MetaTrader is initialized and logged in.")
+                    return False
+                if result.retcode != mt5.TRADE_RETCODE_DONE:
+                    print(f"❌ Order failed: {result.retcode}")
+                    return False
+                
+                else:
+                    print(f"✅ {action.capitalize()} order placed at {price}. Retcode: {result.retcode}")
+                    self.TradesData.add(request)
+                    self.TradesData = self.TradesData.drop(columns=['type_time', 'comment', 'type_filling', 'deviation'])
+                    self.current_position = action
 
-            if result.retcode != mt5.TRADE_RETCODE_DONE:
-                print(f"❌ Order failed: {result.retcode}")
-                return False
-
-            print(f"✅ {action.capitalize()} order placed at {price}. Retcode: {result.retcode}")
-            self.TradesData.add(request)
-            self.TradesData = self.TradesData.drop(columns=['type_time', 'comment', 'type_filling', 'deviation'])
-            self.current_position = action
-
-            return True, request
-
+                    return True, request
+                    
+            else:
+                print(f'sending Telegram: {self.symbol} {action} signal...')
+                return True
+            
         except Exception as e:
             print(f"❌ Error placing order: {e}")
             return False

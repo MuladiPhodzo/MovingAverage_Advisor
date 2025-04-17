@@ -5,28 +5,26 @@ class UserGUI:
     def __init__(self):
         self.user_data = {}
 
-    def get_user_input(self, symbols):
+    def get_user_input(self):
         def submit():
-            # Collect and validate all inputs
             name = name_entry.get().strip()
             if not name:
                 messagebox.showerror("Input Error", "Name is required.")
                 return
-            if len(name) < 3:  # Example validation for name length
+            if len(name) < 3:
                 messagebox.showerror("Input Error", "Name must be at least 3 characters long.")
                 return
-            email = email_entry.get().strip()
-            if not email:
-                messagebox.showerror("Input Error", "Email is required.")
-                return
-            if "@" not in email or "." not in email:  # Basic email validation
-                messagebox.showerror("Input Error", "Invalid email format.")
-                return
-            if len(email) < 5:  
-                
-                messagebox.showerror("Input Error", "Email must be at least 5 characters long.")
+            
+            server = server_entry.get().strip()
+            if not server:
+                messagebox.showerror("Input Error", "server is required.")
                 return
             
+            volume = volume_entry.get().strip()
+            if not volume:
+                messagebox.showerror("Input Error", "volume is required.")
+                return
+
             account_id = account_entry.get().strip()
             if not account_id:
                 messagebox.showerror("Input Error", "Account ID is required.")
@@ -37,64 +35,76 @@ class UserGUI:
             if len(account_id) < 5:
                 messagebox.showerror("Input Error", "Account ID must be at least 5 digits long.")
                 return
+
             password = password_entry.get().strip()
             if not password:
                 messagebox.showerror("Input Error", "Password is required.")
                 return
-            if len(password) < 8 or len(password)>16:  # Example validation for password length
-                messagebox.showerror("Input Error", "Password must be at least 8  and less than characters long .")
-                return
-
-            if not all([name, email, account_id, password]):
-                messagebox.showerror("Input Error", "All fields are required.")
+            if len(password) < 8 or len(password) > 16:
+                messagebox.showerror("Input Error", "Password must be between 8 and 16 characters long.")
                 return
 
             self.user_data = {
-                "symbols": symbols,
                 "name": name,
-                "email": email,
+                "volume": volume,
+                ''"server": server,	
                 "account_id": account_id,
                 "password": password,
             }
-            root.destroy()  # Close the popup
+            root.destroy()
 
         root = tk.Tk()
         root.title("Trading Bot Setup")
-        root.geometry("600x600")
-        root.resizable(False, False)
+        window_width = 400
+        window_height = 400
 
-        row = 0
-        tk.Label(root, text="Your Symbols:", font=("Arial", 10, "bold")).grid(row=row, column=0, columnspan=2, pady=(10, 5))
-        row += 1
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        x = (screen_width // 2) - (window_width // 2)
+        y = (screen_height // 2) - (window_height // 2)
+        root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        root.configure(bg="#f4f4f4")
 
-        # Display symbols
-        tk.Label(root, text=", ".join(symbols)).grid(row=row, column=0, columnspan=2, pady=(10, 10))
-        row += 1
+        main_frame = tk.Frame(root, bg="#f4f4f4")
+        main_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-        # Input fields
-        tk.Label(root, text="Name:").grid(row=row, column=0, sticky="e", padx=10, pady=5)
-        name_entry = tk.Entry(root)
-        name_entry.grid(row=row, column=1, padx=10, pady=5)
-        row += 1
+        label_style = {"font": ("Segoe UI", 10), "bg": "#f4f4f4", "fg": "#333"}
+        entry_style = {"bg": "#fff", "fg": "#000", "relief": "flat", "width": 30}
 
-        tk.Label(root, text="Email:").grid(row=row, column=0, sticky="e", padx=10, pady=5)
-        email_entry = tk.Entry(root)
-        email_entry.grid(row=row, column=1, padx=10, pady=5)
-        row += 1
+        header_style = {"font": ("Segoe UI", 14, "bold"), "bg": "#f4f4f4", "fg": "#333"}
+        tk.Label(main_frame, text="🚀 Trading Bot Setup", **header_style).grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
-        tk.Label(root, text="Account ID:").grid(row=row, column=0, sticky="e", padx=10, pady=5)
-        account_entry = tk.Entry(root)
-        account_entry.grid(row=row, column=1, padx=10, pady=5)
-        row += 1
+        tk.Label(main_frame, text="Name:", **label_style).grid(row=1, column=0, sticky="e", padx=10, pady=5)
+        name_entry = tk.Entry(main_frame, **entry_style)
+        name_entry.grid(row=1, column=1, padx=10, pady=5)
 
-        tk.Label(root, text="Password:").grid(row=row, column=0, sticky="e", padx=10, pady=5)
-        password_entry = tk.Entry(root, show="*")
-        password_entry.grid(row=row, column=1, padx=10, pady=5)
-        row += 1
+        tk.Label(main_frame, text="server:", **label_style).grid(row=3, column=0, sticky="e", padx=10, pady=5)
+        server_entry = tk.Entry(main_frame, **entry_style)
+        server_entry.grid(row=3, column=1, padx=10, pady=5)
+        
+        tk.Label(main_frame, text="Volume:", **label_style).grid(row=4, column=0, sticky="e", padx=10, pady=5)
+        volume_entry = tk.Entry(main_frame, **entry_style)
+        volume_entry.grid(row=4, column=1, padx=10, pady=5)
 
-        # Submit button
-        submit_btn = tk.Button(root, text="Start Bot", command=submit)
-        submit_btn.grid(row=row, column=0, columnspan=2, pady=15)
+        tk.Label(main_frame, text="Account ID:", **label_style).grid(row=5, column=0, sticky="e", padx=10, pady=5)
+        account_entry = tk.Entry(main_frame, **entry_style)
+        account_entry.grid(row=5, column=1, padx=10, pady=5)
+
+        tk.Label(main_frame, text="Password:", **label_style).grid(row=6, column=0, sticky="e", padx=10, pady=5)
+        password_entry = tk.Entry(main_frame, show="*", **entry_style)
+        password_entry.grid(row=6, column=1, padx=10, pady=5)
+
+        submit_btn = tk.Button(main_frame,
+                               text="Start Bot",
+                               command=submit,
+                               bg="#007acc",
+                               fg="white",
+                               font=("Segoe UI", 10, "bold"),
+                               relief="raised",
+                               bd=2,
+                               padx=10,
+                               pady=5)
+        submit_btn.grid(row=7, column=0, columnspan=2, pady=(20, 10))
 
         root.mainloop()
         return self.user_data

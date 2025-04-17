@@ -1,7 +1,5 @@
-import pandas as pd
 import time
 import concurrent.futures as ft
-import MetaTrader5 as mt5
 # Now import MovingAverages
 import Advisor
 import MovingAverage.MovingAverage as MA
@@ -17,7 +15,7 @@ class RunAdvisorBot:
 		self.init = None
 
 	def backtest(self, symbols: list):
-     
+	 
 		client = Advisor.MetaTrader5Client()
 		client.initialize()
 		for symbol in symbols:
@@ -31,7 +29,7 @@ class RunAdvisorBot:
 			ltf_strategy.run_moving_average_strategy(symbol, data, ltf_strategy)
 
 	def main(self, symbol, client: Advisor.MetaTrader5Client):
-     
+	 
 		print(f'✅ Thread started for {symbol}...')
 		try:
 			res = client.initialize()
@@ -70,7 +68,7 @@ class RunAdvisorBot:
 
 				htf_latest = HTF_data.iloc[-1]
 				ltf_latest = LTF_data.iloc[-1]
-    
+	
 				current_price = ltf_latest['close']
 				market_Bias = "Bullish" if htf_latest['Fast_MA'] > htf_latest['Slow_MA'] else "Bearish"
 				ltf_Bias = "Buy" if ltf_latest["Fast_MA"] > ltf_latest['Slow_MA'] else "Sell"
@@ -91,10 +89,11 @@ if __name__ == "__main__":
 	gui = GUI.UserGUI()
 	tempClient = Advisor.MetaTrader5Client()
 	res = tempClient.initialize()
-	# gui.get_user_input(res[1])
+  
+	# user_data = gui.get_user_input()
 	bot = RunAdvisorBot()
 	bot.symbols = res[1]
-	# bot.backtest(bot.symbols )
+	bot.backtest(bot.symbols )
 
 	tempClient.shutdown()
 

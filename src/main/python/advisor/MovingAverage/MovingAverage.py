@@ -105,11 +105,11 @@ class MovingAverageCrossover:
 
         # Clean up bad columns created by tuple headers (from Excel maybe?)
         cleaned_data = LTS_data.drop(columns=['tick_volume', 'real_volume', 'spread', 'Signal'])
-        trades = cleaned_data.copy().dropna()
+        # trades = cleaned_data.copy().dropna()
         
-        print(f'{self.symbol}-entries:\n {trades.tail(50)}')
+        print(f'{self.symbol}-entries:\n {cleaned_data.head(50)}')
             
-        return trades
+        return cleaned_data
                 
             
         print("Entry levels identified.")
@@ -189,36 +189,38 @@ class MovingAverageCrossover:
         
         ax.fill_between(ltf_data['time'], ltf_data['Fast_MA'], ltf_data['Slow_MA'], where=(ltf_data['Fast_MA'] > ltf_data['Slow_MA']), color='green', alpha=0.3, label='Bullish Zone')
         ax.fill_between(ltf_data['time'], ltf_data['Fast_MA'], ltf_data['Slow_MA'], where=(ltf_data['Fast_MA'] < ltf_data['Slow_MA']), color='red', alpha=0.3, label='Bearish Zone')
-        ax.fill_between(ltf_data['time'], ltf_data['Fast_MA'], ltf_data['close'], where=(ltf_data['Fast_MA'] - ltf_data['close'] <= 0.0100), color='yellow', alpha=0.3, label='Range')
+        ax.fill_between(ltf_data['time'], ltf_data['Fast_MA'], ltf_data['close'], where=(ltf_data['Fast_MA'] - ltf_data['close'] <= 0.005), color='orange', alpha=0.3, label='Range')
 
         # Plot Buy signals
-        # buy_signals = ltf_data[ltf_data['Entry'] == 'Buy']
-        # valid_buys = []
-        # if not buy_signals.empty:
-        #     for idx, row in buy_signals.iterrows():
-        #         xmin = row['time']
-        #         xmax = xmin + pd.Timedelta(hours=2)
-
-        #         valid_buys = buy_signals[
-        #                 (buy_signals['Level'] - buy_signals['Fast_MA'] < 0.005)&
-        #                 (buy_signals['Market_bias'] == 'Bullish') &
-        #                 (buy_signals['close'] > buy_signals['Fast_MA'])
-        #             ]
-        #         ax.hlines(y=row['TP'], xmin=xmin, xmax=xmax, color='green', linestyles='--', linewidth=1, label='TP' if idx == buy_signals.index[0] else "")
-        #         ax.hlines(y=row['SL'], xmin=xmin, xmax=xmax, color='red', linestyles='--', linewidth=1, label='SL' if idx == buy_signals.index[0] else "")
-        #     ax.scatter(valid_buys.index, valid_buys['close'],
-        #                 color='green', marker='^', s=100, label='Buy Signal')
-        #     # ax.hlines(buy_signals.index, buy_signals['TP'], color='green', linestyles='---', label='TP')
-        #     # ax.hlines(buy_signals.index, buy_signals['SL'], color='red', linestyles='---', label='SL')
-            
-
-        # # Plot Sell signals
-        # sell_signals = ltf_data[ltf_data['Entry'] == 'Sell']
-        # if not sell_signals.empty:
-        #     ax.scatter(sell_signals.index, sell_signals['close'], 
-        #         color='red', marker='v', s=100, label='Sell Signal')
-        #     # ax.hlines(sell_signals.index, sell_signals['TP'], color='green', linestyles='---', label='TP')
-        #     # ax.hlines(sell_signals.index, sell_signals['SL'], color='red', linestyles='---', label='SL')
+        buy_signals = ltf_data[ltf_data['Entry'] == 'Buy']
+        if not buy_signals.empty:
+            for i in buy_signals.index:
+                time = buy_signals.loc[i, 'time']
+                tp = buy_signals.loc[i, 'TP']
+                sl = buy_signals.loc[i, 'SL']
+                ax.scatter(time, buy_signals.loc[i, 'Level'], marker='^', color='green', label='Buy Signal' if i == buy_signals.index[0] else "")
+                # Draw short horizontal lines (1-minute window or so)
+                ax.hlines(y=tp, xmin=time - pd.Timedelta(minutes=1), xmax=time + pd.Timedelta(minutes=1),
+                        color='green', linestyles='--', label='TP' if i == buy_signals.index[0] else "")
+                
+                ax.hlines(y=sl, xmin=time - pd.Timedelta(minutes=1), xmax=time + pd.Timedelta(minutes=1),
+                        color='red', linestyles='--', label='SL' if i == buy_signals.index[0] else "")
+        # Plot Sell signals
+        sell_signals = ltf_data[ltf_data['Entry'] == 'Sell']
+        if not sell_signals.empty:
+            for i in sell_signals.index:
+                time = sell_signals.loc[i, 'time']
+                tp = sell_signals.loc[i, 'TP']
+                sl = sell_signals.loc[i, 'SL']
+                
+                ax.scatter(time, sell_signals.loc[i, 'Level'], marker='v', color='red', label='Sell Signal' if i == sell_signals.index[0] else "")
+                
+                # Draw short horizontal lines (1-minute window or so)
+                ax.hlines(y=tp, xmin=time - pd.Timedelta(minutes=1), xmax=time + pd.Timedelta(minutes=1),
+                        color='green', linestyles='--', label='TP' if i == sell_signals.index[0] else "")
+                
+                ax.hlines(y=sl, xmin=time - pd.Timedelta(minutes=1), xmax=time + pd.Timedelta(minutes=1),
+                        color='red', linestyles='--', label='SL' if i == sell_signals.index[0] else "")
 
         ax.set_xticks(ltf_data['time'][::max(1, len(ltf_data) // 10)])  # show ~10 evenly spaced labels
         ax.tick_params(axis='x', rotation=45)
