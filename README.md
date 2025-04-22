@@ -131,9 +131,5 @@ LinkedIn: https://www.linkedin.com/in/phodzo-muladi-654214257
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License
 ```
-
----
-
-Let me know if you want this tailored to include specific symbols, strategies, or if you're planning to open-source it on GitHub — I can help format it for that too.
