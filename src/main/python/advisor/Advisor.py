@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from tkinter import messagebox
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 import numpy as np
@@ -24,17 +25,38 @@ class MetaTrader5Client:
         self.account_info = None
         self.terminal_info = None
         self.TF = timeframes
+        
+    async def logIn(self, user_data):
+        res = await self.initialize(user_data)
+        if not res[0]:
+            print("Connection failed, error code =", mt5.last_error())
+            mt5.shutdown()
+            return False
+        print(f"✅ Successfully connected to MT5 account {user_data['account_id']} on server '{user_data['server']}'")
+        return res
 
-    def initialize(self):
+    def initialize(self, user_data):
         try:
-            if not mt5.initialize():
-                print("initialize() failed, error code =", mt5.last_error())
-                mt5.shutdown()
-                return False
+            if user_data is not None:
+                if not mt5.initialize(login=int(user_data['account_id']), password=user_data['password'], server=user_data['server']):
+                    print("initialize() failed, error code =", mt5.last_error())
+                    messagebox.showerror("Login Error", "Failed to connect to MetaTrader 5.")
+                    mt5.shutdown()
+                    return False
+                
+            else:
+                if not mt5.initialize():
+                    print("initialize() failed, error code =", mt5.last_error())
+                    mt5.shutdown()
+                    return False
 
         finally:
+            messagebox.showerror("Login successful", "Connecting to MetaTrader 5....")        
+            print("🚀 Bot is ready to start trading!")
+            
             self.account_info = mt5.account_info()
             self.terminal_info = mt5.terminal_info()
+            
             print('searching for available symbols...')
             symbols = self.get_Symbols()
 

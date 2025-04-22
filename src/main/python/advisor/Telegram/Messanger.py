@@ -1,44 +1,47 @@
-import requests
-import Telegram as tb
-from telegram import Update
+import venv
 from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram import Update
+import requests
 
+class TelegramMessenger:
+    def __init__(self, chat_id=None):
+        self.BOT_TOKEN = "TOKEN"  # 🛠️ Use environment variable or provided token
+        self.chat_id = chat_id
+        self.should_run = True  # 🔁 Flag to control bot execution
 
-class TelegramMessanger():
-    def __init__(self):
-        self.BOT_TOKEN = None
-        self.chatID = None
-        
-        pass
-    
-    
-    BOT_TOKEN = "your_bot_token"
-
-    async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         chat_id = update.effective_chat.id
-        await context.bot.send_message(chat_id=chat_id, text=f"Your Chat ID is: {chat_id}")
+        self.chat_id = chat_id
+        self.should_run = True
+        await context.bot.send_message(chat_id=chat_id, text=f"✅ Advisor started.\nChat ID: {chat_id}")
 
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.run_polling()
+    async def stop(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        self.should_run = False
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="🛑 Advisor stopped by user.")
 
-    
+    def run_bot(self):
+        """
+        Starts the Telegram bot and waits for commands.
+        """
+        app = Application.builder().token(self.BOT_TOKEN).build()
+        app.add_handler(CommandHandler("start", self.start))
+        app.add_handler(CommandHandler("stop", self.stop))  # 🆕 Add stop command
+
+        print("🤖 Bot is running. Use /start to begin and /stop to stop the advisor.")
+        app.run_polling()
+
     def send_message(self, message):
-        """
-        Send a message to a Telegram chat.
-        :param message: The message to send.
-        """
-        # Your logic to send a message to Telegram goes here
-        bot_token = "YOUR_API_TOKEN"
-        chat_id = "YOUR_CHAT_ID"
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        
+        if not self.chat_id:
+            print("❌ Chat ID not set. Use /start on your bot first.")
+            return
+
+        url = f"https://api.telegram.org/bot{self.BOT_TOKEN}/sendMessage"
         payload = {
-            "chat_id": chat_id, 
+            "chat_id": self.chat_id,
             "text": message,
             "parse_mode": "HTML",
-            }
-        
+        }
+
         try:
             response = requests.post(url, data=payload)
             if response.status_code == 200:

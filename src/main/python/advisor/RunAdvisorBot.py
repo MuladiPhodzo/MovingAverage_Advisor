@@ -1,10 +1,15 @@
 import time
 import concurrent.futures as ft
+import sys
+import os	
 # Now import MovingAverages
 import Advisor
 import MovingAverage.MovingAverage as MA
 import Trade.TradesAlgo as algorithim
-import GUI.userInput as GUI
+from GUI.userInput import UserGUI, LogWindow
+import Telegram.Messanger as Tlg
+
+
 
 
 
@@ -13,11 +18,20 @@ class RunAdvisorBot:
 		self.symbols = None
 		self.advisor = Advisor.MetaTrader5Client()
 		self.init = None
+  
+		self.gui = UserGUI()
+		self.logger = self.gui.log_window
+  
+		# sys.stdout = self.logger.redirector   # Redirect print to logger window
+		# sys.stderr = self.logger.redirector   # Optional: Also set stderr if you want error logs too
+		
+		# Tlg.stop(self.stop_advisor)
 
 	def backtest(self, symbols: list):
 	 
 		client = Advisor.MetaTrader5Client()
 		client.initialize()
+  
 		for symbol in symbols:
 			data = client.get_rates_range(symbol)
 			htf_strategy = MA.MovingAverageCrossover(symbol, data=data["HTF"])
@@ -28,11 +42,11 @@ class RunAdvisorBot:
 			data = {'HTF':HTF_data, 'LTF': LTF_data}
 			ltf_strategy.run_moving_average_strategy(symbol, data, ltf_strategy)
 
-	def main(self, symbol, client: Advisor.MetaTrader5Client):
+	def main(self, user_data, symbol, client: Advisor.MetaTrader5Client):
 	 
 		print(f'✅ Thread started for {symbol}...')
 		try:
-			res = client.initialize()
+			res = client.logIn(user_data)
 			self.init = res[0]
 			while self.init:
 				
@@ -83,41 +97,58 @@ class RunAdvisorBot:
 
 		except Exception as e:
 			print(f'❌ Exception in thread {symbol}: {e}')
+		finally:
+			client.shutdown()
+			print(f'❌ Thread for {symbol} has ended.')
+			# self.Logger.root.quit()
+			# self.Logger.root.destroy()
 
 if __name__ == "__main__":
-	import Advisor as Client
-	gui = GUI.UserGUI()
-	tempClient = Advisor.MetaTrader5Client()
-	res = tempClient.initialize()
-  
-	# user_data = gui.get_user_input()
-	bot = RunAdvisorBot()
-	bot.symbols = res[1]
-	bot.backtest(bot.symbols )
+    import sys
 
-	tempClient.shutdown()
+    bot = RunAdvisorBot()
 
+    def start_bot_logic():
+        tempClient = Advisor.MetaTrader5Client()
+        res = tempClient.initialize(bot.gui.user_data)
 
-	print('marketwatch symbols: ', bot.symbols)
+        if not res[0]:
+            print('❌ Failed to initialize MetaTrader5. Exiting...')
+            sys.exit(1)
 
-	print('running threads------------------------------------------------------')
+        bot.symbols = res[1]
+        tempClient.shutdown()
 
-	with ft.ThreadPoolExecutor(max_workers=len(bot.symbols)) as executor:
-		futures = {
-			executor.submit(
-				bot.main,
-				symbol,
-				client = Client.MetaTrader5Client(),  # Create a new instance for each thread
-			): symbol for symbol in bot.symbols
-		}
+        print('Marketwatch symbols:', bot.symbols)
+        print('🏃‍♂️ Running threads...')
 
-		for future in ft.as_completed(futures):
-			symbol = futures[future]
+        with ft.ThreadPoolExecutor(max_workers=len(bot.symbols)) as executor:
+            futures = {
+                executor.submit(
+                    bot.main,
+                    bot.gui.user_data,
+                    symbol,
+                    client=Advisor.MetaTrader5Client()
+                ): symbol for symbol in bot.symbols
+            }
 
-			try:
-				future.result()
-			except Exception as e:
-				print(f'❌ Thread for {symbol} failed with error: {e}')
-				continue
+            for future in ft.as_completed(futures):
+                symbol = futures[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    print(f'❌ Thread for {symbol} failed with error: {e}')
 
-#  bot.advisor.shutdown()
+    # Wait for GUI submission
+    def check_gui_closed():
+        if bot.gui.should_run:
+            # Main GUI closed (after submit)
+            print('running bot...')
+            start_bot_logic()
+        else:
+            
+            bot.gui.root.after(1000, check_gui_closed)
+
+    check_gui_closed()
+    bot.gui.root.mainloop()
+
