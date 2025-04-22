@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import datetime
 import os
 import numpy as np
 
@@ -37,8 +38,7 @@ class MovingAverageCrossover:
 
 
         self.data = data.dropna()
-        print(f'📈 MA Data Available for {self.symbol}')
-        print("Moving averages calculated.")
+        print(f'MA Data Available for {self.symbol}')
         return self.data	
 
     def identify_entry_levels(self, HTS_data: pd.DataFrame, LTS_data: pd.DataFrame):
@@ -107,14 +107,12 @@ class MovingAverageCrossover:
         cleaned_data = LTS_data.drop(columns=['tick_volume', 'real_volume', 'spread', 'Signal'])
         # trades = cleaned_data.copy().dropna()
         
-        print(f'{self.symbol}-entries:\n {cleaned_data.head(50)}')
+        print("Entry levels identified.")
             
         return cleaned_data
-                
-            
-        print("Entry levels identified.")
+    
 
-    def save_signals_to_csv(self, data, file_name="src/main/python/advisor/Logs"):
+    def save_signals_to_csv(self, data, file_name="src/main/python/advisor/Logs/Rates"):
         """
         Save identified entry levels to a CSV file.
         - Creates the file if it doesn't exist.

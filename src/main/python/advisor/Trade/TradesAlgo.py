@@ -24,15 +24,14 @@ class MT5TradingAlgorithm:
         try:
             # Define order type
             order_type = mt5.ORDER_TYPE_BUY if action == 'buy' else mt5.ORDER_TYPE_SELL
-            print(f"🟢 {self.symbol} Placing {action.upper()} order...")
 
             # Get symbol info
             symbol_info = mt5.symbol_info(self.symbol)
-            print(f"Can trade: {symbol_info.trade_mode}") 
-            print(symbol_info._asdict())
+            # print(f"Can trade: {symbol_info.trade_mode}") 
+            # print(symbol_info._asdict())
 
             if not symbol_info:
-                print(f"Symbol {self.symbol} not found, cannot place order.")
+                print(f"Symbol {self.symbol} not be found, cannot place order.")
                 return False
 
             point = symbol_info.point
@@ -70,7 +69,7 @@ class MT5TradingAlgorithm:
                     self.TradesData.add(request)
                     self.TradesData = self.TradesData.drop(columns=['type_time', 'comment', 'type_filling', 'deviation'])
                     self.current_position = action
-
+                    print(f"🟢 {self.symbol} Placing {action.upper()} order...")
                     return True, request
                     
             else:
@@ -90,7 +89,7 @@ class MT5TradingAlgorithm:
         if abs(current_price - ltf_latest['Fast_MA']) <= THRESHOLD:
             ltf_latest['Range'] = True  # ✅ This is now safe
 
-            print(f'📌 Trading Decision - {symbol}: Market Bias={market_bias} | LTF Bias={ltf_Bias} | range: {abs(current_price - ltf_latest["Fast_MA"])}')
+            print(f'📌 Trading Decision - {symbol}: Market Bias={market_bias} | LTF Bias={ltf_Bias} | range: {abs(current_price - ltf_latest["Fast_MA"]) <= THRESHOLD}')
 
             if market_bias == "Bullish" and ltf_Bias == 'Buy' and current_price > ltf_latest['Fast_MA']:
                 print(f"{symbol} - Confirmed Bullish Signal - Placing BUY order")
@@ -102,11 +101,10 @@ class MT5TradingAlgorithm:
                 result = self.place_order("sell")
                 self.TradesData = ltf_latest
 
-            print(result if result is not None else f"{symbol} - No action taken within range.")
+            print(f"{symbol} - No action taken within range." if result is None else f"{symbol} - Action taken: {result}")
 
         else:
-            print(f'{self.symbol} - current price: {current_price}, Fast_MA: {ltf_latest["Fast_MA"]}')
-            print(f"{dt.datetime.now()} {symbol} - No valid entry signal")
+            print(f"{symbol} - No valid entry signal")
 
     def close(self):
         """Shutdown MT5 connection."""

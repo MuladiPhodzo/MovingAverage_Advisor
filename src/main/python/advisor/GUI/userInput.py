@@ -2,8 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
 import queue
-import sys
-import Advisor  # Assuming you have your MetaTrader5Client inside Advisor.py
+from Logs.Logger import FileLogger
 
 
 class TextRedirector:
@@ -59,11 +58,13 @@ class UserGUI:
         self.should_run = None
         # Set up GUI window
         self.setup_gui()
-        # Initialize logger window
-        self.log_window = LogWindow(None, self.quit)
-        print(f'intializing user GUI......')
-        sys.stdout = self.log_window.redirector
-        sys.stderr = self.log_window.redirector
+        
+        
+        # # Initialize logger window
+        # self.log_window = LogWindow(None, self.quit)
+        # print(f'intializing user GUI......')
+        # sys.stdout = self.log_window.redirector
+        # sys.stderr = self.log_window.redirector
         
         
         
@@ -101,11 +102,15 @@ class UserGUI:
                 entry.config(show="*")
             entry.grid(row=idx, column=1, padx=10, pady=5)
             setattr(self, attr, entry)
+            
+        tk.Button(main_frame, text="Skip", command=self.skip,
+                  bg="#ffcc00", fg="white", font=("Segoe UI", 10, "bold"),
+                  relief="raised", bd=2, padx=10, pady=5).grid(row=idx + 1, column=0, columnspan=2, pady=(20, 5))
 
         # Buttons
         tk.Button(main_frame, text="Start Bot", command=self.submit,
                   bg="#007acc", fg="white", font=("Segoe UI", 10, "bold"),
-                  relief="raised", bd=2, padx=10, pady=5).grid(row=idx + 1, column=0, columnspan=2, pady=(20, 5))
+                  relief="raised", bd=2, padx=10, pady=5).grid(row=idx + 2, column=0, columnspan=2, pady=(20, 5))
 
         
 
@@ -119,13 +124,13 @@ class UserGUI:
         # Validations
         if not server or not volume:
             messagebox.showerror("Input Error", "Server and Volume are required.")
-            return
+            return None
         if not account_id.isdigit() or len(account_id) < 5:
             messagebox.showerror("Input Error", "Valid Account ID is required.")
-            return
+            return None
         if not password or not (8 <= len(password) <= 16):
             messagebox.showerror("Input Error", "Password must be 8–16 characters.")
-            return
+            return None
 
         self.user_data = {
             "volume": volume,
@@ -144,6 +149,14 @@ class UserGUI:
         
         self.root.withdraw()
         self.should_run = True
+        FileLogger(self.user_data)
+        return self.user_data
+    
+    def skip(self):
+        self.user_data = None
+        self.root.withdraw()
+        self.should_run = True
+        FileLogger(self.user_data)
         return self.user_data
     
     def quit(self):

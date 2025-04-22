@@ -26,8 +26,10 @@ class MetaTrader5Client:
         self.terminal_info = None
         self.TF = timeframes
         
-    async def logIn(self, user_data):
-        res = await self.initialize(user_data)
+    def logIn(self, user_data):
+        print("🔑 Logging in to MetaTrader 5...")
+        res = self.initialize(user_data)
+        
         if not res[0]:
             print("Connection failed, error code =", mt5.last_error())
             mt5.shutdown()
@@ -38,6 +40,7 @@ class MetaTrader5Client:
     def initialize(self, user_data):
         try:
             if user_data is not None:
+                print("Initializing MetaTrader 5 with user data...")
                 if not mt5.initialize(login=int(user_data['account_id']), password=user_data['password'], server=user_data['server']):
                     print("initialize() failed, error code =", mt5.last_error())
                     messagebox.showerror("Login Error", "Failed to connect to MetaTrader 5.")
