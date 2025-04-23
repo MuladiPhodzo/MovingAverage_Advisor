@@ -3,10 +3,11 @@ import concurrent.futures as ft
 import sys
 import threading, queue
 
-import Advisor
-import MovingAverage.MovingAverage as MA
-import Trade.TradesAlgo as algorithim
-from GUI.userInput import UserGUI
+from advisor.Client import Advisor as Advisor
+from advisor.MovingAverage import MovingAverage as MA
+from advisor.Trade import TradesAlgo as algorithim
+from advisor.GUI import userInput as gui
+from advisor.Telegram import Messanger
 
 
 class RunAdvisorBot:
@@ -14,12 +15,14 @@ class RunAdvisorBot:
         self.symbols = None
         self.client = Advisor.MetaTrader5Client()
         self.init = None
-        self.gui = UserGUI()
+        self.gui = gui.UserGUI()
         self.symbol_queue = queue.Queue()
+        self.telegram = Messanger.TelegramMessenger()
+        self.telegram.run_bot_async()  # Start the Telegram bot in a separate thread
 
     def backtest(self, symbols: list):
         client = Advisor.MetaTrader5Client()
-        client.initialize()
+        client.initialize(self.gui.user_data)
         for symbol in symbols:
             data = client.get_rates_range(symbol)
             
@@ -40,16 +43,14 @@ class RunAdvisorBot:
                 while self.init:
                     data = self.client.get_multi_tf_data(symbol)
                     if data is None:
-                        print(f'❌ No data returned for {symbol}. Retrying in 10 seconds...')
+                        print(f'❌error: No data returned for {symbol}. Retrying in 10 seconds...')
                         time.sleep(10)
                         continue
 
-                    print(f'📊 Data retrieved for {symbol}............')
                     if "HTF" not in data or "LTF" not in data:
-                        print(f'⚠️ Missing timeframes for {symbol}. Skipping...')
+                        print(f'⚠️ error :Missing timeframes for {symbol}. Skipping...')
                         break
 
-                    print(f'✅ Processing {symbol} with Multi Timeframe Data')
                     htf_strategy = MA.MovingAverageCrossover(symbol, data=data["HTF"])
                     ltf_strategy = MA.MovingAverageCrossover(symbol, data=data["LTF"])
 
@@ -72,8 +73,7 @@ class RunAdvisorBot:
                     market_Bias = "Bullish" if htf_latest['Fast_MA'] > htf_latest['Slow_MA'] else "Bearish"
                     ltf_Bias = "Buy" if ltf_latest["Fast_MA"] > ltf_latest['Slow_MA'] else "Sell"
 
-                    print(f'{symbol}-current price: {current_price} Fast_MA: {ltf_latest["Fast_MA"]}')
-                    trade = algorithim.MT5TradingAlgorithm(symbol)
+                    trade = algorithim.MT5TradingAlgorithm(symbol, self.telegram)
                     trade.run_Trades(market_Bias, ltf_Bias, ltf_latest, current_price, self.client.THRESHOLD, symbol)
 
                     print(f'🛌 {symbol} Thread sleeping for 15 minutes....')
@@ -88,6 +88,7 @@ class RunAdvisorBot:
 
     def start_bot_logic(self):
         tempClient = Advisor.MetaTrader5Client()
+    
         res = tempClient.initialize(self.gui.user_data)
         if not res[0]:
             print('❌ Failed to initialize MetaTrader5. Exiting...')
@@ -121,10 +122,10 @@ class RunAdvisorBot:
 
 if __name__ == "__main__":
     bot = RunAdvisorBot()
-
+    # bot.backtest(bot.symbols)
     def check_gui_closed():
         if bot.gui.should_run:
-            print('🟢 GUI closed, running bot...')
+            print('🟢running bot......')
             bot.start_bot_logic()
         else:
             bot.gui.root.after(1000, check_gui_closed)

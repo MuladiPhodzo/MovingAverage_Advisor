@@ -5,7 +5,7 @@ import MetaTrader5 as mt5
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../main/python")))
 
-import advisor.Advisor as Client
+import advisor.Client.Advisor as Client
 import unittest
 
 

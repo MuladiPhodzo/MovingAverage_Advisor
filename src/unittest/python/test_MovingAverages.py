@@ -1,7 +1,7 @@
 import unittest
 import pandas as pd
 import advisor.MovingAverage as MA
-import advisor.Advisor as Client
+import advisor.Client.Advisor as Client
 import MetaTrader5 as mt5
 
 

@@ -164,16 +164,7 @@ class MovingAverageCrossover:
         if not isinstance(self.data.index, pd.DatetimeIndex):
             self.data.index = pd.to_datetime(self.data.index)
 
-        # Check for abnormally large timestamp (only if needed)
-        # max_time = ltf_data['time'].max()
-        # if isinstance(max_time, pd.Timestamp) and max_time.timestamp() > 1e11:
-        #     raise ValueError("Abnormally large timestamp detected in 'time' column.")
-
-        # else:
-        #     ltf_data['time'] = pd.to_datetime(ltf_data['time'], unit='s')
-        #     ltf_data.set_index('time', inplace=True)
-        # Only keep rows where the index (or time column) is not null
-        fig, ax = plt.subplots(figsize=(18, 6))
+        ax = plt.subplots(figsize=(18, 6))
 
         # Plot market data (uses self.data.index)
         # Ensure time column is in datetime format and sorted

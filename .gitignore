@@ -1,0 +1,49 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# PyBuilder build directories
+target/
+build/
+dist/
+.pybuilder/
+
+# Test and coverage
+.pytest_cache/
+.coverage
+.tox/
+.nox/
+coverage.xml
+htmlcov/
+
+# PyInstaller
+*.spec
+
+# VS Code settings
+.vscode/
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Misc
+*.bak
+*.tmp
+*.swp

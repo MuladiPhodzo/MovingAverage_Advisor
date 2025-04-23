@@ -1,9 +1,10 @@
 import MetaTrader5 as mt5
 import pandas as pd
 import datetime as dt
+from advisor.Telegram import Messanger
 
 class MT5TradingAlgorithm:
-    def __init__(self, symbol, lot_size=0.1, magic_number=1000):
+    def __init__(self, symbol, telegram: Messanger.TelegramMessenger, lot_size=0.1, magic_number=1000):
         """
         Initialize the MT5 trading algorithm.
         :param symbol: The trading symbol (e.g., 'USDJPY').
@@ -15,6 +16,7 @@ class MT5TradingAlgorithm:
         self.lot_size = lot_size
         self.magic_number = magic_number
         self.current_position = None  # Track 'buy', 'sell', or None
+        self.telegram = telegram
 
     def place_order(self, action, stop_loss=100, take_profit=300):
         """
@@ -66,6 +68,8 @@ class MT5TradingAlgorithm:
                 
                 else:
                     print(f"✅ {action.capitalize()} order placed at {price}. Retcode: {result.retcode}")
+                    self.telegram.send_message(f"🟢Placed {action} {self.symbol} @ {request['price']} | TP: {request['tp']} | SL: {request['sl']}\n NB: use proper risk management")
+                
                     self.TradesData.add(request)
                     self.TradesData = self.TradesData.drop(columns=['type_time', 'comment', 'type_filling', 'deviation'])
                     self.current_position = action
@@ -74,6 +78,7 @@ class MT5TradingAlgorithm:
                     
             else:
                 print(f'sending Telegram: {self.symbol} {action} signal...')
+                self.telegram.send_message(f"🟢 {action} {self.symbol} | TP: {request['tp']} | SL: {request['sl']}\n NB: use proper risk management")
                 return True
             
         except Exception as e:

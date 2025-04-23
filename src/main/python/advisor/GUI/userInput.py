@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
 import queue
-from Logs.Logger import FileLogger
+from advisor.Logs import Logger as logs
 
 
 class TextRedirector:
@@ -149,14 +149,14 @@ class UserGUI:
         
         self.root.withdraw()
         self.should_run = True
-        FileLogger(self.user_data)
+        logs.FileLogger(self.user_data)
         return self.user_data
     
     def skip(self):
         self.user_data = None
         self.root.withdraw()
         self.should_run = True
-        FileLogger(self.user_data)
+        logs.FileLogger(self.user_data)
         return self.user_data
     
     def quit(self):
