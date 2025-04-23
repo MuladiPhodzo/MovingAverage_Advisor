@@ -1,20 +1,26 @@
-Collecting requests
-  Using cached requests-2.32.3-py3-none-any.whl.metadata (4.6 kB)
-Collecting charset-normalizer<4,>=2 (from requests)
-  Using cached charset_normalizer-3.4.1-cp313-cp313-win_amd64.whl.metadata (36 kB)
-Collecting idna<4,>=2.5 (from requests)
-  Using cached idna-3.10-py3-none-any.whl.metadata (10 kB)
-Collecting urllib3<3,>=1.21.1 (from requests)
-  Using cached urllib3-2.3.0-py3-none-any.whl.metadata (6.5 kB)
-Collecting certifi>=2017.4.17 (from requests)
-  Using cached certifi-2025.1.31-py3-none-any.whl.metadata (2.5 kB)
-Using cached requests-2.32.3-py3-none-any.whl (64 kB)
-Using cached certifi-2025.1.31-py3-none-any.whl (166 kB)
-Using cached charset_normalizer-3.4.1-cp313-cp313-win_amd64.whl (102 kB)
-Using cached idna-3.10-py3-none-any.whl (70 kB)
-Using cached urllib3-2.3.0-py3-none-any.whl (128 kB)
-Installing collected packages: urllib3, idna, charset-normalizer, certifi, requests
-Successfully installed certifi-2025.1.31 charset-normalizer-3.4.1 idna-3.10 requests-2.32.3 urllib3-2.3.0
+Collecting MetaTrader5
+  Using cached MetaTrader5-5.0.4874-cp313-cp313-win_amd64.whl.metadata (2.4 kB)
+Collecting numpy
+  Using cached numpy-2.2.4-cp313-cp313-win_amd64.whl.metadata (60 kB)
+Collecting pandas
+  Using cached pandas-2.2.3-cp313-cp313-win_amd64.whl.metadata (19 kB)
+Collecting python-dateutil>=2.8.2 (from pandas)
+  Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+Collecting pytz>=2020.1 (from pandas)
+  Using cached pytz-2025.2-py2.py3-none-any.whl.metadata (22 kB)
+Collecting tzdata>=2022.7 (from pandas)
+  Using cached tzdata-2025.2-py2.py3-none-any.whl.metadata (1.4 kB)
+Collecting six>=1.5 (from python-dateutil>=2.8.2->pandas)
+  Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+Using cached MetaTrader5-5.0.4874-cp313-cp313-win_amd64.whl (50 kB)
+Using cached numpy-2.2.4-cp313-cp313-win_amd64.whl (12.6 MB)
+Using cached pandas-2.2.3-cp313-cp313-win_amd64.whl (11.5 MB)
+Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Using cached pytz-2025.2-py2.py3-none-any.whl (509 kB)
+Using cached tzdata-2025.2-py2.py3-none-any.whl (347 kB)
+Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+Installing collected packages: pytz, tzdata, six, numpy, python-dateutil, MetaTrader5, pandas
+Successfully installed MetaTrader5-5.0.4874 numpy-2.2.4 pandas-2.2.3 python-dateutil-2.9.0.post0 pytz-2025.2 six-1.17.0 tzdata-2025.2
 
 [notice] A new release of pip is available: 24.3.1 -> 25.0.1
 [notice] To update, run: python.exe -m pip install --upgrade pip

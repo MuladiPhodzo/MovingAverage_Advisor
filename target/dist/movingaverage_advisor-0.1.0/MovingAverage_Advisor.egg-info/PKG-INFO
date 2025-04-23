@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: MovingAverage_Advisor
+Version: 0.1.0
+Home-page: 
+Author: Phodzo Muladi
+Author-email: muladi.lione@gmail.com
+Maintainer: 
+Maintainer-email: 
+Classifier: Development Status :: 3 - Alpha
+Classifier: Programming Language :: Python
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: keywords
+
+MovingAverage_Advisor
