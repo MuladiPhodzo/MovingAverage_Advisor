@@ -99,12 +99,12 @@ class MT5TradingAlgorithm:
 
             if market_bias == "Bullish" and ltf_Bias == 'Buy' and current_price > ltf_latest['Fast_MA']:
                 print(f"{symbol} - Confirmed Bullish Signal - Placing BUY order")
-                result = self.place_order("buy")
+                result = self.place_order("buy", stop_loss=self.user_data['sl'], take_profit=self.user_data['tp'])
                 self.TradesData = ltf_latest
 
             elif market_bias == "Bearish" and ltf_Bias == 'Sell' and current_price < ltf_latest['Fast_MA']:
                 print(f"{symbol} - Confirmed Bearish Signal - Placing SELL order")
-                result = self.place_order("sell")
+                result = self.place_order("sell", stop_loss=self.user_data['sl'], take_profit=self.user_data['tp'])
                 self.TradesData = ltf_latest
 
             print(f"{symbol} - No action taken within range." if result is None else f"{symbol} - Action taken: {result}")

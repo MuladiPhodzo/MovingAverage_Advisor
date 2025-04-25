@@ -77,7 +77,7 @@ class RunAdvisorBot:
                     market_Bias = "Bullish" if htf_latest['Fast_MA'] > htf_latest['Slow_MA'] else "Bearish"
                     ltf_Bias = "Buy" if ltf_latest["Fast_MA"] > ltf_latest['Slow_MA'] else "Sell"
 
-                    trade = algorithim.MT5TradingAlgorithm(symbol, self.telegram)
+                    trade = algorithim.MT5TradingAlgorithm(symbol, self.telegram, self.gui.user_data)
                     trade.run_Trades(market_Bias, ltf_Bias, ltf_latest, current_price, self.client.THRESHOLD, symbol)
 
                     print(f'🛌 {symbol} Thread sleeping for 15 minutes....')
