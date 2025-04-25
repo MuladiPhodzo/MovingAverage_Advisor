@@ -4,7 +4,7 @@ import datetime as dt
 from advisor.Telegram import Messanger
 
 class MT5TradingAlgorithm:
-    def __init__(self, symbol, telegram: Messanger.TelegramMessenger, lot_size=0.1, magic_number=1000):
+    def __init__(self, symbol, telegram: Messanger.TelegramMessenger, user_data, magic_number=1000):
         """
         Initialize the MT5 trading algorithm.
         :param symbol: The trading symbol (e.g., 'USDJPY').
@@ -13,8 +13,9 @@ class MT5TradingAlgorithm:
         """
         self.TradesData = None
         self.symbol = symbol
-        self.lot_size = lot_size
+        self.lot_size = user_data['volume']
         self.magic_number = magic_number
+        self.user_data = user_data
         self.current_position = None  # Track 'buy', 'sell', or None
         self.telegram = telegram
 

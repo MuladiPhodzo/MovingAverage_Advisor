@@ -1,5 +1,4 @@
 import time
-import concurrent.futures as ft
 import sys
 import threading, queue
 
@@ -13,10 +12,15 @@ from advisor.Telegram import Messanger
 class RunAdvisorBot:
     def __init__(self):
         self.symbols = None
-        self.client = Advisor.MetaTrader5Client()
         self.init = None
         self.gui = gui.UserGUI()
+        
+        self.log_window = gui.LogWindow(None)
+        sys.stdout = self.log_window.redirector
+        sys.stderr = self.log_window.redirector
+        # self.gui.user_data = self.gui.user_data
         self.symbol_queue = queue.Queue()
+        self.client = Advisor.MetaTrader5Client()
         self.telegram = Messanger.TelegramMessenger()
         self.telegram.run_bot_async()  # Start the Telegram bot in a separate thread
 
@@ -108,7 +112,7 @@ class RunAdvisorBot:
 
         print('🏃‍♂️ Running worker threads...')
         threads = []
-        for _ in range(min(5, len(self.symbols))):  # Max 5 workers
+        for _ in range(len(self.symbols)):  # Max 5 workers
             t = threading.Thread(target=self.worker)
             t.start()
             threads.append(t)
@@ -126,7 +130,7 @@ if __name__ == "__main__":
     def check_gui_closed():
         if bot.gui.should_run:
             print('🟢running bot......')
-            bot.start_bot_logic()
+            threading.Thread(target=bot.start_bot_logic).start()
         else:
             bot.gui.root.after(1000, check_gui_closed)
 
